@@ -5,15 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión - Portafolio</title>
     <link rel="stylesheet" href="styles.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%239d50bb'/%3E%3Ctext x='50%' y='55%' text-anchor='middle' dominant-baseline='middle' font-size='40' font-family='Poppins, Arial, sans-serif' fill='white'%3EA%3C/text%3E%3C/svg%3E" type="image/svg+xml">
     <style>
         body{font-family: 'Poppins', Arial, sans-serif; background: linear-gradient(180deg,#faf6ff,#fff); margin:0}
-        .login-container{max-width:460px;margin:6rem auto;padding:2rem;background:#fff;border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,0.08)}
+            * { box-sizing: border-box; }
+            .login-container{max-width:420px;margin:5rem auto;padding:2.5rem;background:white;border-radius:16px;box-shadow:0 15px 30px rgba(0,0,0,0.12)}
         .login-container h2{color:#6e48aa;text-align:center;margin-bottom:1rem}
-        .input-with-icon{position:relative;margin-bottom:1rem}
-        .input-with-icon .icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:10px;background:#6e48aa;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px}
-        .input-with-icon input{width:100%;padding:0.9rem 1rem 0.9rem 64px;border:1px solid #eee;border-radius:8px;font-size:1rem}
+            .form-group { margin-bottom: 1rem; }
+            .form-group label { display:block; margin-bottom:0.5rem }
+
+            /* Contenedor para input con icono */
+            .input-with-icon { position: relative; }
+            .input-with-icon .input-icon {
+                position: absolute;
+                left: 12px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 44px;
+                height: 44px;
+                border-radius: 10px;
+                background: #6e48aa;
+                color: #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+                pointer-events: none; /* evita que el icono interfiera con clics */
+                z-index: 2;
+            }
+            .input-with-icon input {
+                width: 100%;
+                padding: 0.9rem 1rem 0.9rem 64px; /* espacio para el icono */
+                border: 1px solid #eee;
+                border-radius: 8px;
+                font-size: 1rem;
+                background-repeat: no-repeat;
+                background-position: left center;
+            }
         button{width:100%;padding:0.85rem;background:linear-gradient(135deg,#6e48aa,#9d50bb);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600}
         .small-btns{display:flex;gap:0.6rem;margin-top:0.75rem}
         .small-btns button{width:unset;flex:1;padding:0.6rem}
@@ -23,13 +53,13 @@
     <div class="login-container">
         <h2>Iniciar Sesión</h2>
         <form id="loginForm">
-            <div class="input-with-icon">
-                <span class="icon"><i class="fas fa-user"></i></span>
-                <input type="text" id="username" placeholder="Usuario" required>
+            <div class="form-group input-with-icon">
+                <span class="input-icon" aria-hidden="true"><i class="fas fa-user"></i></span>
+                <input type="text" id="username" class="form-control" required placeholder="Usuario">
             </div>
-            <div class="input-with-icon">
-                <span class="icon"><i class="fas fa-lock"></i></span>
-                <input type="password" id="password" placeholder="Contraseña" required>
+            <div class="form-group input-with-icon">
+                <span class="input-icon" aria-hidden="true"><i class="fas fa-lock"></i></span>
+                <input type="password" id="password" class="form-control" required placeholder="Contraseña">
             </div>
             <button type="submit">Ingresar</button>
             <div class="small-btns">
