@@ -22,3 +22,5 @@ Credenciales iniciales:
 Notas de seguridad:
 - Nunca pegues PATs (Personal Access Tokens) en chats públicos.
 - Si pegaste algún token, revócalo desde https://github.com/settings/tokens inmediatamente.
+
+NOTA: Si has actualizado la contraseña del usuario `amirandreve507@gmail.com` manualmente desde SQL Server Management Studio (SSMS), tras el cambio prueba el login en el backend y considera eliminar los scripts de administración (`backend/reset-password-mssql.js`, `backend/seed-admin-mssql.js`, `backend/run-seed-and-push.ps1`) del repositorio público cuando termines la configuración.
