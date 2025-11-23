@@ -100,19 +100,15 @@
             const btn = document.getElementById('adminPanelBtn');
             const role = sessionStorage.getItem('role');
             const usuario = sessionStorage.getItem('usuario');
-            // si no hay role o no es Manager, ocultar rápido
             if (role !== 'Manager' && usuario !== 'Antony') { btn.style.display = 'none'; return; }
             try {
-                const resp = await fetch('/admin/check-ip', { method: 'GET', cache: 'no-store' });
-                if (!resp.ok) { btn.style.display = 'none'; return; }
-                const j = await resp.json();
-                if (j && j.allowed === true) {
-                    btn.style.display = '';
-                } else {
-                    btn.style.display = 'none';
-                }
+                const headers = {};
+                const token = sessionStorage.getItem('token');
+                if (token) headers['Authorization'] = 'Bearer ' + token;
+                const resp = await fetch('/admin/check-ip', { method: 'GET', cache: 'no-store', headers });
+                const j = resp.ok ? await resp.json() : null;
+                btn.style.display = j && j.allowed === true ? '' : 'none';
             } catch (e) {
-                console.warn('No se pudo comprobar ADMIN IP:', e);
                 btn.style.display = 'none';
             }
         }
