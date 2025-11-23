@@ -5,6 +5,7 @@
   const mainSection = document.getElementById('main');
   const usersTbody = document.querySelector('#usersTable tbody');
   const refreshBtn = document.getElementById('refreshUsers');
+  const refreshSessionsBtn = document.getElementById('refreshSessions');
   const createUserForm = document.getElementById('createUserForm');
   const btnAgregar = document.getElementById('btnAgregar');
   const btnModificar = document.getElementById('btnModificar');
@@ -45,6 +46,28 @@
     }catch(e){ /* ignore */ }
   }
 
+  async function fetchSessions(){
+    try{
+      const res = await fetch('/admin/sessions', { headers: token ? { 'Authorization': 'Bearer '+token } : {} });
+      if(!res.ok) return;
+      const sessions = await res.json();
+      const tbody = document.querySelector('#sessionsTable tbody');
+      tbody.innerHTML = '';
+      sessions.forEach(s=>{
+        const tr = document.createElement('tr');
+        const c = (v)=>{ const td=document.createElement('td'); td.textContent=v; return td; };
+        tr.appendChild(c(s.userId));
+        tr.appendChild(c(s.role));
+        tr.appendChild(c(s.ip));
+        tr.appendChild(c(s.ua));
+        tr.appendChild(c(new Date(s.createdAt).toLocaleString()));
+        tr.appendChild(c(new Date(s.lastSeenAt).toLocaleString()));
+        tbody.appendChild(tr);
+      });
+      document.getElementById('sessionsSection').style.display = sessions.length ? '' : '';
+    }catch(e){}
+  }
+
   async function fetchUsers(){
     try{
       const res = await fetch('/api/usuarios', { headers: token ? { 'Authorization': 'Bearer '+token } : {} });
@@ -79,6 +102,7 @@
         fetchUsers();
         await loadConfig();
         await loadFiles();
+        await fetchSessions();
       } else {
         // no tiene permisos para ver panel admin
         showAdminSections(false);
@@ -90,6 +114,7 @@
   logoutBtn.addEventListener('click', ()=>{ token=null; loginForm.style.display='block'; logoutBtn.style.display='none'; mainSection.style.display='none'; setStatus(false,'Sesión cerrada'); });
 
   refreshBtn.addEventListener('click', fetchUsers);
+  refreshSessionsBtn && refreshSessionsBtn.addEventListener('click', fetchSessions);
 
   createUserForm.addEventListener('submit', async (ev)=>{
     ev.preventDefault();
@@ -196,7 +221,7 @@
   });
 
   // Al cargar, intentar listar (sin token mostrará la lista pública si existe)
-  checkAdminIp().then(()=>fetchUsers());
+  checkAdminIp().then(()=>{ fetchUsers(); fetchSessions(); });
 
   async function loadUserIps(usuarioId) {
     try{
