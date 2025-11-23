@@ -59,6 +59,7 @@
     </main>
    
     <script>
+        if(sessionStorage.getItem('guestMode') !== 'true' && !sessionStorage.getItem('usuario')) { window.location.href = 'login.html'; }
         // Botón de inicio
         document.getElementById('homeBtn').addEventListener('click', function(e) {
             const btn = this;

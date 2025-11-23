@@ -21,6 +21,9 @@ const auth = {
     
     logout() {
         this.isAuthenticated = false;
+        sessionStorage.removeItem('usuario');
+        sessionStorage.removeItem('role');
+        sessionStorage.removeItem('guestMode');
     },
     
     checkAuth() {

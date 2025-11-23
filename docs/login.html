@@ -8,9 +8,9 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%239d50bb'/%3E%3Ctext x='50%' y='55%' text-anchor='middle' dominant-baseline='middle' font-size='40' font-family='Poppins, Arial, sans-serif' fill='white'%3EA%3C/text%3E%3C/svg%3E" type="image/svg+xml">
     <style>
-        body{font-family: 'Poppins', Arial, sans-serif; background: linear-gradient(180deg,#faf6ff,#fff); margin:0}
+        body{font-family: 'Poppins', Arial, sans-serif; background: linear-gradient(180deg,#faf6ff,#fff); margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center}
             * { box-sizing: border-box; }
-            .login-container{max-width:420px;margin:5rem auto;padding:2.5rem;background:white;border-radius:16px;box-shadow:0 15px 30px rgba(0,0,0,0.12)}
+            .login-container{max-width:520px;margin:4rem auto;padding:2.5rem;background:white;border-radius:16px;box-shadow:0 15px 30px rgba(0,0,0,0.12)}
         .login-container h2{color:#6e48aa;text-align:center;margin-bottom:1rem}
             .form-group { margin-bottom: 1rem; }
             .form-group label { display:block; margin-bottom:0.5rem }
@@ -53,112 +53,87 @@
             input:-webkit-autofill:focus,
             input:-webkit-autofill:active {
                 -webkit-box-shadow: 0 0 0px 1000px white inset !important;
-                <!DOCTYPE html>
-                <html lang="es">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Iniciar Sesión - Portafolio</title>
-                    <link rel="stylesheet" href="styles.css">
-                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-                    <style>
-                        /* Pequeñas mejoras visuales locales para el login */
-                        .login-container { max-width:420px; margin:6rem auto; padding:2.2rem; border-radius:14px; background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(245,243,250,0.95)); box-shadow: 0 12px 30px rgba(41,20,77,0.08); transform-origin:center; animation: popIn .45s ease; }
-                        .login-header { text-align:center; margin-bottom:1rem; }
-                        .logo-circle { width:72px; height:72px; margin:0 auto 0.5rem; border-radius:16px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#6e48aa,#9d50bb); color:white; font-weight:700; font-size:2rem; box-shadow:0 8px 20px rgba(157,80,187,0.18); }
-                        .hint { text-align:center; color:#6e48aa; margin-bottom:1rem; font-weight:600; }
-                        .row { display:flex; gap:0.5rem; }
-                        .small-btn { flex:1; padding:0.6rem; border-radius:8px; border:none; cursor:pointer; font-weight:600; }
-                        #adminPanelBtn { display:none; }
-                        @keyframes popIn { from { opacity:0; transform: translateY(12px) scale(.98); } to { opacity:1; transform: translateY(0) scale(1); } }
-                    </style>
-                </head>
-                <body class="theme-original">
+                box-shadow: 0 0 0px 1000px white inset !important;
+                background-image: none !important;
+                background-color: white !important;
+                color: inherit !important;
+            }
+        button{width:100%;padding:0.85rem;background:linear-gradient(135deg,#6e48aa,#9d50bb);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600}
+        .small-btns{display:flex;gap:0.6rem;margin-top:0.75rem}
+        .small-btns button{width:unset;flex:1;padding:0.6rem}
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Iniciar Sesión</h2>
+        <form id="loginForm">
+            <div class="form-group input-with-icon">
+                <i class="input-icon fas fa-user" aria-hidden="true"></i>
+                <input type="text" id="username" class="form-control" required placeholder="Usuario" autocomplete="username">
+            </div>
+            <div class="form-group input-with-icon">
+                <i class="input-icon fas fa-lock" aria-hidden="true"></i>
+                <input type="password" id="password" class="form-control" required placeholder="Contraseña" autocomplete="current-password">
+            </div>
+            <button type="submit">Ingresar</button>
+            <div class="small-btns">
+                <button type="button" id="guestBtn" style="background:#f3e8ff;color:#6e48aa">Modo Invitado</button>
+                <button type="button" id="adminPanelBtn" style="background:#444">Panel admin</button>
+            </div>
+        </form>
+    </div>
+    <script src="app.js"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e){
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            if(!username || !password){ alert('Completa ambos campos'); return }
+            if(typeof auth !== 'undefined' && auth.login(username,password)){
+                if(username === 'Antony') sessionStorage.removeItem('guestMode');
+                window.location.href = 'main.html';
+            } else { alert('Usuario o contraseña incorrectos') }
+        });
+        document.getElementById('guestBtn').addEventListener('click', function(){ sessionStorage.setItem('guestMode','true'); window.location.href='main.html' });
+        // Mostrar u ocultar el botón de panel admin sólo si: (a) role === 'Manager' y (b) la IP está autorizada
+        async function updateAdminBtnVisibility() {
+            const btn = document.getElementById('adminPanelBtn');
+            const role = sessionStorage.getItem('role');
+            const usuario = sessionStorage.getItem('usuario');
+            // si no hay role o no es Manager, ocultar rápido
+            if (role !== 'Manager' && usuario !== 'Antony') { btn.style.display = 'none'; return; }
+            try {
+                const resp = await fetch('/admin/check-ip', { method: 'GET', cache: 'no-store' });
+                if (!resp.ok) { btn.style.display = 'none'; return; }
+                const j = await resp.json();
+                if (j && j.allowed === true) {
+                    btn.style.display = '';
+                } else {
+                    btn.style.display = 'none';
+                }
+            } catch (e) {
+                console.warn('No se pudo comprobar ADMIN IP:', e);
+                btn.style.display = 'none';
+            }
+        }
+        // Llamada inicial y cada vez que la página gane foco (por si cambia la IP)
+        updateAdminBtnVisibility();
+        window.addEventListener('focus', updateAdminBtnVisibility);
 
-                    <div class="login-container">
-                        <div class="login-header">
-                            <div class="logo-circle">A</div>
-                            <h2>Iniciar Sesión</h2>
-                            <div class="hint">Accede para editar tu portafolio</div>
-                        </div>
-
-                        <form id="loginForm">
-                            <div class="form-group" style="position:relative;">
-                                <input type="text" id="username" required placeholder="Usuario" style="padding-left:2.2rem; width:100%;">
-                            </div>
-                            <div class="form-group" style="position:relative;">
-                                <input type="password" id="password" required placeholder="Contraseña" style="padding-left:2.2rem; width:100%;">
-                            </div>
-                            <button type="submit" class="small-btn" style="background: linear-gradient(135deg,#6e48aa,#9d50bb); color:white;">Ingresar</button>
-                            <div style="height:0.5rem"></div>
-                            <div class="row">
-                                <button type="button" id="guestBtn" class="small-btn" style="background:#eee;">Modo Invitado</button>
-                                <button type="button" id="adminPanelBtn" class="small-btn" style="background:#444; color:white;">Panel de administración</button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <script src="app.js"></script>
-                    <script>
-                        // Obtener IP pública y guardarla (si falla, el sistema sigue funcionando sin IP-lock)
-                        async function obtenerIPyGuardar() {
-                            try {
-                                const r = await fetch('https://api.ipify.org?format=json');
-                                if (!r.ok) throw new Error('no ip');
-                                const j = await r.json();
-                                sessionStorage.setItem('ipUser', j.ip);
-                            } catch (e) {
-                                console.warn('No se pudo obtener IP pública:', e);
-                            }
-                        }
-                        obtenerIPyGuardar();
-
-                        // Manejo del formulario
-                        document.getElementById('loginForm').addEventListener('submit', function(e){
-                            e.preventDefault();
-                            const username = document.getElementById('username').value.trim();
-                            const password = document.getElementById('password').value.trim();
-                            if(!username || !password){ alert('Completa ambos campos'); return }
-                            if(typeof auth !== 'undefined' && auth.login(username,password)){
-                                    if(username === 'Antony') sessionStorage.removeItem('guestMode');
-                                    window.location.href = 'main.html';
-                            } else { alert('Usuario o contraseña incorrectos') }
-                        });
-
-                        document.getElementById('guestBtn').addEventListener('click', function(){ sessionStorage.setItem('guestMode','true'); window.location.href='main.html' });
-
-                        // Mostrar u ocultar el botón de panel admin sólo si: (a) role === 'Manager' y (b) la IP está autorizada
-                        async function updateAdminBtnVisibility() {
-                            const btn = document.getElementById('adminPanelBtn');
-                            const role = sessionStorage.getItem('role');
-                            const usuario = sessionStorage.getItem('usuario');
-                            if (role !== 'Manager' && usuario !== 'Antony') { btn.style.display = 'none'; return; }
-                            try {
-                                const resp = await fetch('/admin/check-ip', { method: 'GET', cache: 'no-store' });
-                                if (!resp.ok) { btn.style.display = 'none'; return; }
-                                const j = await resp.json();
-                                if (j && j.allowed === true) btn.style.display = '';
-                                else btn.style.display = 'none';
-                            } catch (e) {
-                                console.warn('No se pudo comprobar ADMIN IP:', e);
-                                btn.style.display = 'none';
-                            }
-                        }
-                        updateAdminBtnVisibility();
-                        window.addEventListener('focus', updateAdminBtnVisibility);
-
-                        document.getElementById('adminPanelBtn').addEventListener('click', function(){
-                            const role = sessionStorage.getItem('role');
-                            const usuario = sessionStorage.getItem('usuario');
-                            if (role === 'Manager' || usuario === 'Antony') {
-                                fetch('/admin/check-ip', { method: 'GET', cache: 'no-store' }).then(r => r.json()).then(j => {
-                                    if (j && j.allowed === true) window.location.href = 'admin.html';
-                                    else alert('Acceso restringido desde esta ubicación');
-                                }).catch(()=> alert('No se pudo verificar permisos, inténtalo de nuevo'));
-                            } else {
-                                alert('No tienes permisos para acceder al panel de administración');
-                            }
-                        });
-                    </script>
-                </body>
-                </html>
+        // Si el usuario pulsa el botón, validar antes de redirigir (se asume que ya se hizo la comprobación)
+        document.getElementById('adminPanelBtn').addEventListener('click', function(){
+            const role = sessionStorage.getItem('role');
+            const usuario = sessionStorage.getItem('usuario');
+            if (role === 'Manager' || usuario === 'Antony') {
+                // re-check ip synchronously before redirecting
+                fetch('/admin/check-ip', { method: 'GET', cache: 'no-store' }).then(r => r.json()).then(j => {
+                    if (j && j.allowed === true) window.location.href = 'admin.html';
+                    else alert('Acceso restringido desde esta ubicación');
+                }).catch(()=> alert('No se pudo verificar permisos, inténtalo de nuevo'));
+            } else {
+                alert('No tienes permisos para acceder al panel de administración');
+            }
+        });
+    </script>
+</body>
+</html>
