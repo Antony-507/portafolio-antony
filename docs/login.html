@@ -98,16 +98,13 @@
         // Mostrar u ocultar el botón de panel admin sólo si: (a) role === 'Manager' y (b) la IP está autorizada
         async function updateAdminBtnVisibility() {
             const btn = document.getElementById('adminPanelBtn');
-            const role = sessionStorage.getItem('role');
-            const usuario = sessionStorage.getItem('usuario');
-            if (role !== 'Manager' && usuario !== 'Antony') { btn.style.display = 'none'; return; }
             try {
                 const headers = {};
                 const token = sessionStorage.getItem('token');
                 if (token) headers['Authorization'] = 'Bearer ' + token;
                 const resp = await fetch('/admin/check-ip', { method: 'GET', cache: 'no-store', headers });
                 const j = resp.ok ? await resp.json() : null;
-                btn.style.display = j && (j.allowed === true || j.allowedDisplay === true) ? '' : 'none';
+                btn.style.display = j && j.allowedDisplay === true ? '' : 'none';
             } catch (e) {
                 btn.style.display = 'none';
             }
