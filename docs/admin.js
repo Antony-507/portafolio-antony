@@ -1,4 +1,5 @@
 (function(){
+  const apiBase = () => localStorage.getItem('api_base') || (location.hostname.endsWith('github.io') ? 'http://localhost:3001' : '');
   const statusEl = document.getElementById('status');
   const loginForm = document.getElementById('loginForm');
   const logoutBtn = document.getElementById('logoutBtn');
@@ -23,7 +24,7 @@
   // Consultar si la petición viene de ADMIN_IP (para mostrar/ocultar botones admin)
   async function checkAdminIp() {
     try{
-      const res = await fetch('/api/is-admin-ip');
+      const res = await fetch(apiBase()+'/api/is-admin-ip');
       if(!res.ok) return;
       const info = await res.json();
       isAdminRemote = !!info.isAdminIP;
@@ -48,7 +49,7 @@
 
   async function fetchSessions(){
     try{
-      const res = await fetch('/admin/sessions', { headers: token ? { 'Authorization': 'Bearer '+token } : {} });
+      const res = await fetch(apiBase()+'/admin/sessions', { headers: token ? { 'Authorization': 'Bearer '+token } : {} });
       if(!res.ok) return;
       const sessions = await res.json();
       const tbody = document.querySelector('#sessionsTable tbody');
@@ -70,7 +71,7 @@
 
   async function fetchUsers(){
     try{
-      const res = await fetch('/api/usuarios', { headers: token ? { 'Authorization': 'Bearer '+token } : {} });
+      const res = await fetch(apiBase()+'/api/usuarios', { headers: token ? { 'Authorization': 'Bearer '+token } : {} });
       if(!res.ok) throw new Error('Error: '+res.status);
       const users = await res.json();
       usersTbody.innerHTML = '';
@@ -88,7 +89,7 @@
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     try{
-      const res = await fetch('/api/login', { method:'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ email, password }) });
+      const res = await fetch(apiBase()+'/api/login', { method:'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ email, password }) });
       const data = await res.json();
       if(!res.ok) return setStatus(false, data.error || 'Login falló');
       token = data.token;
@@ -123,7 +124,7 @@
     const password = document.getElementById('newPassword').value;
     const ip = document.getElementById('newIP').value || null;
     try{
-      const res = await fetch('/admin/create-user', { method:'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ nombre, email, password, ip }) });
+      const res = await fetch(apiBase()+'/admin/create-user', { method:'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ nombre, email, password, ip }) });
       const data = await res.json();
       if(!res.ok) return setStatus(false, data.error || 'No autorizado');
       setStatus(true, 'Usuario creado: '+data.userId);
@@ -178,14 +179,14 @@
     const email = document.getElementById('modEmail').value;
     const password = document.getElementById('modPassword').value;
     try{
-      const res = await fetch('/admin/update-user', { method:'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ usuarioId: parseInt(usuarioId,10), nombre, email, password }) });
+      const res = await fetch(apiBase()+'/admin/update-user', { method:'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ usuarioId: parseInt(usuarioId,10), nombre, email, password }) });
       const data = await res.json();
       if(!res.ok) return setStatus(false, data.error || 'No autorizado');
       // Si se proporcionó IP, añadirla
       const modIP = document.getElementById('modIP').value;
       if(modIP) {
         try{
-          await fetch('/admin/add-ip', { method:'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ ip: modIP, usuarioId: parseInt(usuarioId,10), isAdmin: false }) });
+          await fetch(apiBase()+'/admin/add-ip', { method:'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ ip: modIP, usuarioId: parseInt(usuarioId,10), isAdmin: false }) });
         }catch(err){ /* ignorar fallo de add-ip sin bloquear actualización */ }
       }
       setStatus(true, 'Usuario actualizado');
@@ -201,7 +202,7 @@
       const id = del.dataset.id;
       if(!confirm('¿Eliminar usuario id '+id+' ? Esta acción no se puede deshacer.')) return;
       try{
-        const res = await fetch('/admin/delete-user', { method:'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ usuarioId: parseInt(id,10) }) });
+        const res = await fetch(apiBase()+'/admin/delete-user', { method:'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ usuarioId: parseInt(id,10) }) });
         const data = await res.json();
         if(!res.ok) return setStatus(false, data.error || 'No autorizado');
         setStatus(true, 'Usuario eliminado');
@@ -225,7 +226,7 @@
 
   async function loadUserIps(usuarioId) {
     try{
-      const res = await fetch(`/admin/ips?usuarioId=${usuarioId}`);
+      const res = await fetch(apiBase()+`/admin/ips?usuarioId=${usuarioId}`);
       if(!res.ok) {
         document.getElementById('userIps').style.display = 'none';
         return;
@@ -249,7 +250,7 @@
     const id = btn.dataset.id;
     if(!confirm('¿Borrar esta IP?')) return;
     try{
-      const res = await fetch('/admin/delete-ip', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ipId: parseInt(id,10) }) });
+      const res = await fetch(apiBase()+'/admin/delete-ip', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ipId: parseInt(id,10) }) });
       const data = await res.json();
       if(!res.ok) return setStatus(false, data.error || 'No autorizado');
       setStatus(true, 'IP eliminada');

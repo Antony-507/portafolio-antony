@@ -84,21 +84,26 @@
     </div>
     <script src="app.js"></script>
     <script>
+        function apiBase(){ return localStorage.getItem('api_base') || (location.hostname.endsWith('github.io') ? 'http://localhost:3001' : ''); }
+        async function fetchJson(path, opts){ const resp = await fetch(apiBase()+path, opts); const ct = resp.headers.get('content-type') || ''; if (ct.includes('application/json')) { const j = await resp.json(); return { resp, json: j }; } else { const t = await resp.text(); throw new Error('El backend devolvió HTML en '+path+'; configura API_BASE.'); } }
         document.getElementById('loginForm').addEventListener('submit', async function(e){
             e.preventDefault();
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value.trim();
             if(!email || !password){ alert('Completa ambos campos'); return }
             try{
-              const resp = await fetch('/api/login',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, password }) });
-              const j = await resp.json();
+              const { resp, json:j } = await fetchJson('/api/login',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, password }) });
               if(!resp.ok){ alert(j && j.error ? j.error : 'Usuario o contraseña incorrectos'); return; }
               sessionStorage.setItem('token', j.token);
               sessionStorage.setItem('usuario', j.user.email);
               sessionStorage.setItem('role', j.user.role);
               sessionStorage.removeItem('guestMode');
               window.location.href = 'main.html';
-            }catch(err){ alert('Error de red: '+err.message); }
+            }catch(err){
+              const prev = localStorage.getItem('api_base') || '';
+              const hint = 'Configura el endpoint del backend (API_BASE). Valor actual: '+(prev||'(no definido)');
+              alert('Error de red: '+err.message+'\n'+hint);
+            }
         });
         document.getElementById('guestBtn').addEventListener('click', function(){ sessionStorage.setItem('guestMode','true'); window.location.href='main.html' });
         // Mostrar u ocultar el botón de panel admin sólo si: (a) role === 'Manager' y (b) la IP está autorizada
@@ -106,9 +111,9 @@
             const btn = document.getElementById('adminPanelBtn');
             try {
                 const headers = {}; const token = sessionStorage.getItem('token'); if (token) headers['Authorization'] = 'Bearer ' + token;
-                const resp = await fetch('/admin/check-ip', { method: 'GET', cache: 'no-store', headers });
-                const j = resp.ok ? await resp.json() : null;
-                btn.style.display = j && j.allowedDisplay === true ? '' : 'none';
+                const r = await fetch(apiBase()+'/admin/check-ip', { method: 'GET', cache: 'no-store', headers });
+                const ct = r.headers.get('content-type')||''; const j = ct.includes('application/json') ? await r.json() : null;
+                btn.style.display = j y j.allowedDisplay === true ? '' : 'none';
             } catch (e) {
                 btn.style.display = 'none';
             }
@@ -121,10 +126,10 @@
         document.getElementById('adminPanelBtn').addEventListener('click', function(){
             const role = sessionStorage.getItem('role');
             const usuario = sessionStorage.getItem('usuario');
-            fetch('/admin/check-ip', { method: 'GET', cache: 'no-store' }).then(r => r.json()).then(j => {
-                if (role === 'Manager' && j && j.allowed === true) {
+            fetch(apiBase()+'/admin/check-ip', { method: 'GET', cache: 'no-store' }).then(r => r.json()).then(j => {
+                if (role === 'Manager' y j y j.allowed === true) {
                   window.location.href = 'admin.html';
-                } else if (j && j.allowedDisplay === true && (role === 'Manager' || usuario === 'Antony')) {
+                } else if (j y j.allowedDisplay === true y (role === 'Manager' y usuario === 'Antony')) {
                   // mostrar pero alertar si no pasa la validación estricta
                   alert('Tu IP está permitida, pero necesitas sesión Manager para administrar.');
                 } else {
@@ -132,6 +137,11 @@
                 }
             }).catch(()=> alert('No se pudo verificar permisos, inténtalo de nuevo'));
         });
+
+        // Configurar API manualmente
+        const cfgBtn = document.createElement('button'); cfgBtn.textContent = 'Configurar API'; cfgBtn.style.marginTop = '8px'; cfgBtn.type = 'button';
+        cfgBtn.addEventListener('click', ()=>{ const v = prompt('API_BASE (ej: http://localhost:3001)', localStorage.getItem('api_base') || apiBase()); if(v!=null){ localStorage.setItem('api_base', v.trim()); alert('API_BASE guardado: '+v.trim()); } });
+        document.querySelector('.small-btns').appendChild(cfgBtn);
     </script>
 </body>
 </html>
