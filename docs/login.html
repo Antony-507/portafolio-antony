@@ -107,7 +107,7 @@
                 if (token) headers['Authorization'] = 'Bearer ' + token;
                 const resp = await fetch('/admin/check-ip', { method: 'GET', cache: 'no-store', headers });
                 const j = resp.ok ? await resp.json() : null;
-                btn.style.display = j && j.allowed === true ? '' : 'none';
+                btn.style.display = j && (j.allowed === true || j.allowedDisplay === true) ? '' : 'none';
             } catch (e) {
                 btn.style.display = 'none';
             }
@@ -120,15 +120,16 @@
         document.getElementById('adminPanelBtn').addEventListener('click', function(){
             const role = sessionStorage.getItem('role');
             const usuario = sessionStorage.getItem('usuario');
-            if (role === 'Manager' || usuario === 'Antony') {
-                // re-check ip synchronously before redirecting
-                fetch('/admin/check-ip', { method: 'GET', cache: 'no-store' }).then(r => r.json()).then(j => {
-                    if (j && j.allowed === true) window.location.href = 'admin.html';
-                    else alert('Acceso restringido desde esta ubicación');
-                }).catch(()=> alert('No se pudo verificar permisos, inténtalo de nuevo'));
-            } else {
-                alert('No tienes permisos para acceder al panel de administración');
-            }
+            fetch('/admin/check-ip', { method: 'GET', cache: 'no-store' }).then(r => r.json()).then(j => {
+                if (role === 'Manager' && j && j.allowed === true) {
+                  window.location.href = 'admin.html';
+                } else if (j && j.allowedDisplay === true && (role === 'Manager' || usuario === 'Antony')) {
+                  // mostrar pero alertar si no pasa la validación estricta
+                  alert('Tu IP está permitida, pero necesitas sesión Manager para administrar.');
+                } else {
+                  alert('Acceso restringido desde esta ubicación');
+                }
+            }).catch(()=> alert('No se pudo verificar permisos, inténtalo de nuevo'));
         });
     </script>
 </body>
