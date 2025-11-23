@@ -120,7 +120,7 @@
                 const headers = {}; const token = sessionStorage.getItem('token'); if (token) headers['Authorization'] = 'Bearer ' + token;
                 const r = await fetch(apiBase()+'/admin/check-ip', { method: 'GET', cache: 'no-store', headers });
                 const ct = r.headers.get('content-type')||''; const j = ct.includes('application/json') ? await r.json() : null;
-                btn.style.display = j y j.allowedDisplay === true ? '' : 'none';
+                btn.style.display = j && j.allowedDisplay === true ? '' : 'none';
             } catch (e) {
                 btn.style.display = 'none';
             }
@@ -134,9 +134,9 @@
             const role = sessionStorage.getItem('role');
             const usuario = sessionStorage.getItem('usuario');
             fetch(apiBase()+'/admin/check-ip', { method: 'GET', cache: 'no-store' }).then(r => r.json()).then(j => {
-                if (role === 'Manager' y j y j.allowed === true) {
+                if (role === 'Manager' && j && j.allowed === true) {
                   window.location.href = 'admin.html';
-                } else if (j y j.allowedDisplay === true y (role === 'Manager' y usuario === 'Antony')) {
+                } else if (j && j.allowedDisplay === true && (role === 'Manager' && usuario === 'Antony')) {
                   // mostrar pero alertar si no pasa la validación estricta
                   alert('Tu IP está permitida, pero necesitas sesión Manager para administrar.');
                 } else {
