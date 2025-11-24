@@ -8,9 +8,9 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%239d50bb'/%3E%3Ctext x='50%' y='55%' text-anchor='middle' dominant-baseline='middle' font-size='40' font-family='Poppins, Arial, sans-serif' fill='white'%3EA%3C/text%3E%3C/svg%3E" type="image/svg+xml">
     <style>
-        body{font-family: 'Poppins', Arial, sans-serif; background: linear-gradient(180deg,#faf6ff,#fff); margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center}
+        body{font-family: 'Poppins', Arial, sans-serif; background: linear-gradient(180deg,#faf6ff,#fff); margin:0}
             * { box-sizing: border-box; }
-            .login-container{max-width:520px;margin:4rem auto;padding:2.5rem;background:white;border-radius:16px;box-shadow:0 15px 30px rgba(0,0,0,0.12)}
+            .login-container{max-width:420px;margin:5rem auto;padding:2.5rem;background:white;border-radius:16px;box-shadow:0 15px 30px rgba(0,0,0,0.12)}
         .login-container h2{color:#6e48aa;text-align:center;margin-bottom:1rem}
             .form-group { margin-bottom: 1rem; }
             .form-group label { display:block; margin-bottom:0.5rem }
@@ -44,89 +44,122 @@
                 background-position: left center;
             }
 
-            /* El botón de panel admin es visible para todos; validamos al hacer clic */
-            #adminPanelBtn { display: inline-block; }
+            /* Por defecto ocultar el botón de panel admin en el cliente; se muestra solo si hay rol Manager */
+            #adminPanelBtn { display: none; }
 
             /* Evitar el icono morado / background que Chrome/Edge añade por autofill */
-            input:-webkit-autofill,
-            input:-webkit-autofill:hover,
-            input:-webkit-autofill:focus,
-            input:-webkit-autofill:active {
-                -webkit-box-shadow: 0 0 0px 1000px white inset !important;
-                box-shadow: 0 0 0px 1000px white inset !important;
-                background-image: none !important;
-                background-color: white !important;
-                color: inherit !important;
-            }
-        button{width:100%;padding:0.85rem;background:linear-gradient(135deg,#6e48aa,#9d50bb);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600}
-        .small-btns{display:flex;gap:0.6rem;margin-top:0.75rem}
-        .small-btns button{width:unset;flex:1;padding:0.6rem}
-    </style>
-</head>
-<body>
-    <div class="login-container">
-        <h2>Iniciar Sesión</h2>
-        <form id="loginForm">
-            <div class="form-group input-with-icon">
-                <i class="input-icon fas fa-user" aria-hidden="true"></i>
-                <input type="text" id="identifier" class="form-control" required placeholder="Usuario o Email" autocomplete="username">
-            </div>
-            <div class="form-group input-with-icon">
-                <i class="input-icon fas fa-lock" aria-hidden="true"></i>
-                <input type="password" id="password" class="form-control" required placeholder="Contraseña" autocomplete="current-password">
-            </div>
-            <button type="submit">Ingresar</button>
-            <div class="small-btns">
-                <button type="button" id="guestBtn" style="background:#f3e8ff;color:#6e48aa">Modo Invitado</button>
-                <button type="button" id="adminPanelBtn" style="background:#444">Panel admin</button>
-            </div>
-        </form>
-    </div>
-    <script src="app.js"></script>
-    <script>
-        function apiBase(){ return localStorage.getItem('api_base') || 'http://localhost:3001'; }
-        async function fetchJson(path, opts){
-          const base = apiBase();
-          if(!base){ throw new Error('API_BASE no configurado. Pulsa Configurar API y pon tu backend (https).'); }
-          const resp = await fetch(base+path, opts);
-          const ct = resp.headers.get('content-type') || '';
-          if (ct.includes('application/json')) { const j = await resp.json(); return { resp, json: j }; }
-          const text = await resp.text(); throw new Error('Respuesta no JSON desde '+(base+path)+': '+text.slice(0,80));
-        }
-        document.getElementById('loginForm').addEventListener('submit', async function(e){
-            e.preventDefault();
-            const identifier = document.getElementById('identifier').value.trim();
-            const password = document.getElementById('password').value.trim();
-            if(!identifier || !password){ alert('Completa ambos campos'); return }
-            try{
-              const payload = (identifier.includes('@')) ? { email: identifier, password } : { username: identifier, password };
-              const { resp, json:j } = await fetchJson('/api/login',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-              if(!resp.ok){ alert(j && j.error ? j.error : 'Usuario o contraseña incorrectos'); return; }
-              sessionStorage.setItem('token', j.token);
-              sessionStorage.setItem('usuario', j.user.nombre || j.user.email);
-              sessionStorage.setItem('role', j.user.role);
-              sessionStorage.removeItem('guestMode');
-              window.location.href = 'main.html';
-            }catch(err){
-              const prev = localStorage.getItem('api_base') || '';
-              const hint = 'Configura el endpoint del backend (API_BASE). Valor actual: '+(prev||'(no definido)');
-              alert('Error de red: '+err.message+'\n'+hint);
-            }
-        });
-        document.getElementById('guestBtn').addEventListener('click', function(){ sessionStorage.setItem('guestMode','true'); window.location.href='main.html' });
-        // Mostrar u ocultar el botón de panel admin sólo si: (a) role === 'Manager' y (b) la IP está autorizada
-        // El botón se queda visible; la validación se hará al hacer clic
+                        input:-webkit-autofill,
+                        input:-webkit-autofill:hover,
+                        input:-webkit-autofill:focus,
+                        input:-webkit-autofill:active {
+                            -webkit-box-shadow: 0 0 0px 1000px white inset !important;
+                            -webkit-text-fill-color: #000 !important;
+                        }
+                </style>
+            
+            </head>
+            <body class="theme-original">
+            
+                <div class="login-container">
+                    <div class="login-header">
+                        <div class="logo-circle">A</div>
+                        <h2>Iniciar Sesión</h2>
+                        <div class="hint">Accede para editar tu portafolio</div>
+                    </div>
+            
+                    <form id="loginForm">
+                        <div class="form-group" style="position:relative;">
+                            <input type="text" id="username" required placeholder="Usuario" style="padding-left:2.2rem; width:100%;">
+                        </div>
+                        <div class="form-group" style="position:relative;">
+                            <input type="password" id="password" required placeholder="Contraseña" style="padding-left:2.2rem; width:100%;">
+                        </div>
+                        <button type="submit" class="small-btn" style="background: linear-gradient(135deg,#6e48aa,#9d50bb); color:white;">Ingresar</button>
+                        <div style="height:0.5rem"></div>
+                        <div class="row">
+                            <button type="button" id="guestBtn" class="small-btn" style="background:#eee;">Modo Invitado</button>
+                            <button type="button" id="adminPanelBtn" class="small-btn" style="background:#444; color:white;">Panel de administración</button>
+                        </div>
+                    </form>
+                </div>
+            
+                <script src="app.js"></script>
+                <script>
+                    // Obtener IP pública y guardarla (si falla, el sistema sigue funcionando sin IP-lock)
+                    async function obtenerIPyGuardar() {
+                        try {
+                            const r = await fetch('https://api.ipify.org?format=json');
+                            if (!r.ok) throw new Error('no ip');
+                            const j = await r.json();
+                            sessionStorage.setItem('ipUser', j.ip);
+                        } catch (e) {
+                            console.warn('No se pudo obtener IP pública:', e);
+                        }
+                    }
+                    obtenerIPyGuardar();
+            
+                    // Manejo del formulario: intentar login en el backend (/api/login)
+                    async function serverLogin(email, password) {
+                        try {
+                            const resp = await fetch('/api/login', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ email: email, password: password })
+                            });
+                            const json = await resp.json().catch(()=>null);
+                            if (!resp.ok) {
+                                const msg = (json && json.error) ? json.error : 'Login fallido';
+                                alert(msg);
+                                return false;
+                            }
+                            // Guardar token y role en sessionStorage para la UI
+                            if (json && json.token) sessionStorage.setItem('token', json.token);
+                            if (json && json.user && json.user.role) sessionStorage.setItem('role', json.user.role);
+                            if (json && json.user && (json.user.email || json.user.Email)) sessionStorage.setItem('usuario', json.user.email || json.user.Email);
+                            // Redirigir al index principal
+                            window.location.href = 'index.html';
+                            return true;
+                        } catch (e) {
+                            console.error('Login error', e);
+                            alert('Error comunicándose con el servidor');
+                            return false;
+                        }
+                    }
 
-        // Si el usuario pulsa el botón, validar antes de redirigir (se asume que ya se hizo la comprobación)
-        document.getElementById('adminPanelBtn').addEventListener('click', function(){
-            fetch(apiBase()+'/admin/check-ip', { method: 'GET', cache: 'no-store' })
-              .then(r => r.json())
-              .then(j => { if (j && j.allowed === true) { window.location.href = 'admin.html'; } else { alert('No tienes permisos desde esta IP para acceder al panel de administración'); } })
-              .catch(()=> alert('No se pudo verificar permisos, inténtalo de nuevo'));
-        });
+                    document.getElementById('loginForm').addEventListener('submit', function(e){
+                        e.preventDefault();
+                        const username = document.getElementById('username').value.trim();
+                        const password = document.getElementById('password').value.trim();
+                        if(!username || !password){ alert('Completa ambos campos'); return }
+                        // Intentar login en el backend. Si tu cuenta es de demo local (Antony/admin) el servidor también debe tener esa cuenta.
+                        serverLogin(username, password);
+                    });
 
-        // Configurar API manualmente
-        // Ocultar configuración de API en la UI para simplificar
-    </script>
-</body>
-</html>
+                    document.getElementById('guestBtn').addEventListener('click', function(){ sessionStorage.setItem('guestMode','true'); window.location.href='index.html' });
+            
+                    // Mostrar u ocultar el botón de panel admin sólo por role (Manager) o usuario demo 'Antony'
+                    function updateAdminBtnVisibility() {
+                        const btn = document.getElementById('adminPanelBtn');
+                        const role = sessionStorage.getItem('role');
+                        const usuario = sessionStorage.getItem('usuario');
+                        if (role === 'Manager' || usuario === 'Antony') {
+                            btn.style.display = '';
+                        } else {
+                            btn.style.display = 'none';
+                        }
+                    }
+                    updateAdminBtnVisibility();
+                    window.addEventListener('focus', updateAdminBtnVisibility);
+
+                    document.getElementById('adminPanelBtn').addEventListener('click', function(){
+                        const role = sessionStorage.getItem('role');
+                        const usuario = sessionStorage.getItem('usuario');
+                        if (role === 'Manager' || usuario === 'Antony') {
+                            window.location.href = 'admin.html';
+                        } else {
+                            alert('No tienes permisos para acceder al panel de administración');
+                        }
+                    });
+                </script>
+            </body>
+            </html>
