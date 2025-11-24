@@ -99,12 +99,12 @@
                     obtenerIPyGuardar();
             
                     // Manejo del formulario: intentar login en el backend (/api/login)
-                    async function serverLogin(email, password) {
+                    async function serverLogin(identifier, password) {
                         try {
                             const resp = await fetch('/api/login', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ email: email, password: password })
+                                body: JSON.stringify(identifier.includes('@') ? { email: identifier, password } : { username: identifier, password })
                             });
                             const json = await resp.json().catch(()=>null);
                             if (!resp.ok) {

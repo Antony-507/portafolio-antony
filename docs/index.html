@@ -3,9 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portafolio - Redirección</title>
-  <meta http-equiv="refresh" content="0; url=login.html">
-  <script>window.location.replace('login.html');</script>
+  <title>Portafolio - Entrada</title>
+  <script>
+    (function(){
+      try{
+        var t = sessionStorage.getItem('token');
+        var g = sessionStorage.getItem('guestMode');
+        var target = (t || g === 'true') ? 'main.html' : 'login.html';
+        window.location.replace(target);
+      }catch(e){ window.location.replace('login.html'); }
+    })();
+  </script>
 </head>
 <body>
   Redirigiendo a la página de inicio de sesión...
