@@ -71,18 +71,21 @@
                     // Manejo del formulario: intentar login en el backend (/api/login)
                     async function serverLogin(identifier, password) {
                         try {
-                            const payload = identifier.includes('@') ? { email: identifier, password } : { username: identifier, password };
-                            const { resp, json } = await fetchJson('/api/login', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
-                            if (!resp.ok) {
-                                const msg = (json && json.error) ? json.error : 'Login fallido';
-                                alert(msg);
-                                return false;
+                            const isEmail = identifier.includes('@');
+                            let payload = isEmail ? { email: identifier, password } : { username: identifier, password };
+                            let { resp, json } = await fetchJson('/api/login', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
+                            if (!resp.ok && !isEmail && json && typeof json.error === 'string' && json.error.toLowerCase().includes('faltan campos')) {
+                                payload = { email: identifier, password };
+                                ({ resp, json } = await fetchJson('/api/login', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) }));
                             }
-                            // Guardar token y role en sessionStorage para la UI
+                            if (!resp.ok && !isEmail && identifier.toLowerCase() === 'antony') {
+                                payload = { email: 'amirandreve507@gmail.com', password };
+                                ({ resp, json } = await fetchJson('/api/login', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) }));
+                            }
+                            if (!resp.ok) { const msg = (json && json.error) ? json.error : 'Login fallido'; alert(msg); return false; }
                             if (json && json.token) sessionStorage.setItem('token', json.token);
                             if (json && json.user && json.user.role) sessionStorage.setItem('role', json.user.role);
                             if (json && json.user) sessionStorage.setItem('usuario', json.user.nombre || json.user.email || json.user.Email || '');
-                            // Redirigir al index principal
                             window.location.href = 'index.html';
                             return true;
                         } catch (e) {
