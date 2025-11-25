@@ -156,15 +156,15 @@
                     });
 
                     document.getElementById('apiConfigBtn').addEventListener('click', async function(){
-                        const current = apiBase() || '(no definida)';
-                        const v = prompt('API Base (ejemplo: https://tu-backend-publico)\nActual: '+current+'\nDeja vacío para borrar configuración:', current==='(no definida)'?'':current);
+                        let current = apiBase() || '(no definida)';
+                        if(current && current.trim().startsWith('{')) { localStorage.removeItem('api_base'); current = '(no definida)'; }
+                        const v = prompt('API Base (ejemplo: https://tu-backend-publico)\nActual: '+current+'\nDeja vacío para borrar configuración:', current==='(no definida)'?'https://':current);
                         if(v===null) return;
-                        const trimmed = (v||'').trim(); setApiBase(trimmed);
-                        if(trimmed){
-                            alert('API configurada en: '+trimmed+'\nAhora el login usará '+trimmed+'/api/login');
-                        } else {
-                            alert('Configuración de API eliminada. Si estás en GitHub Pages, el login usará fallback local.');
-                        }
+                        const trimmed = (v||'').trim();
+                        if(!trimmed) { setApiBase(''); alert('Configuración de API eliminada. Si estás en GitHub Pages, el login usará modo demo.'); return; }
+                        if(!/^https?:\/\//i.test(trimmed)) { alert('Ingresa una URL válida que comience con http:// o https://'); return; }
+                        setApiBase(trimmed.replace(/\/$/, ''));
+                        alert('API configurada en: '+apiBase()+'\nEl login usará '+apiBase()+'/api/login');
                     });
 
                     (function(){ if(location.hostname.endsWith('github.io') && !localStorage.getItem('api_base')){ const h = document.createElement('div'); h.style.cssText='max-width:520px;margin:0 auto 10px auto;text-align:center;color:#6e48aa;font-size:0.9rem'; h.textContent='Configura tu API para login real o usa Modo Invitado'; document.querySelector('.login-container').insertAdjacentElement('beforebegin', h); } })();
