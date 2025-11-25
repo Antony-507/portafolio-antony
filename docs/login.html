@@ -68,26 +68,26 @@
                     obtenerIPyGuardar();
                     function apiBase(){ return localStorage.getItem('api_base') || (location.hostname.endsWith('github.io') ? '' : ''); }
                     function setApiBase(v){ if(v){ localStorage.setItem('api_base', v); } else { localStorage.removeItem('api_base'); } }
-                    async function fetchJson(path, opts){ const base = apiBase(); const url = (base ? base : '') + path; const resp = await fetch(url, opts); const ct = resp.headers.get('content-type')||''; if(ct.includes('application/json')){ return { resp, json: await resp.json() }; } const t = await resp.text(); throw new Error('Respuesta no JSON desde '+url+': '+t.slice(0,120)); }
+                    async function fetchJson(path, opts){ const base = apiBase(); const url = (base ? base : '') + path; const resp = await fetch(url, opts); const ct = resp.headers.get('content-type')||''; if(ct.includes('application/json')){ try{ const j = await resp.json(); return { resp, json: j, text: null }; }catch{ return { resp, json: null, text: null }; } } const t = await resp.text(); return { resp, json: null, text: t }; }
                     function apiBase(){ return localStorage.getItem('api_base') || (location.hostname.endsWith('github.io') ? '' : ''); }
-                    async function fetchJson(path, opts){ const base = apiBase(); const url = (base ? base : '') + path; const resp = await fetch(url, opts); const ct = resp.headers.get('content-type')||''; if(ct.includes('application/json')){ return { resp, json: await resp.json() }; } const t = await resp.text(); throw new Error('Respuesta no JSON desde '+url+': '+t.slice(0,80)); }
+                    async function fetchJson(path, opts){ const base = apiBase(); const url = (base ? base : '') + path; const resp = await fetch(url, opts); const ct = resp.headers.get('content-type')||''; if(ct.includes('application/json')){ try{ const j = await resp.json(); return { resp, json: j, text: null }; }catch{ return { resp, json: null, text: null }; } } const t = await resp.text(); return { resp, json: null, text: t }; }
             
                     // Manejo del formulario: intentar login en el backend (/api/login)
                     async function serverLogin(identifier, password) {
                         try {
                             const isEmail = identifier.includes('@');
                             let payload = isEmail ? { email: identifier, password } : { username: identifier, password };
-                            let { resp, json } = await fetchJson('/api/login', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
+                            let { resp, json, text } = await fetchJson('/api/login', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
                             if (!resp.ok && !isEmail && json && typeof json.error === 'string' && json.error.toLowerCase().includes('faltan campos')) {
                                 payload = { email: identifier, password };
-                                ({ resp, json } = await fetchJson('/api/login', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) }));
+                                ({ resp, json, text } = await fetchJson('/api/login', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) }));
                             }
                             if (!resp.ok && !isEmail && identifier.toLowerCase() === 'antony') {
                                 payload = { email: 'amirandreve507@gmail.com', password };
-                                ({ resp, json } = await fetchJson('/api/login', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) }));
+                                ({ resp, json, text } = await fetchJson('/api/login', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) }));
                             }
                             if (!resp.ok) {
-                                const msg = (json && json.error) ? json.error : 'Login fallido';
+                                const msg = (json && json.error) ? json.error : (text ? text.slice(0,160) : 'Login fallido');
                                 if ((identifier.toLowerCase() === 'antony' || identifier.toLowerCase() === 'amirandreve507@gmail.com') && password === '507') {
                                     sessionStorage.setItem('token', 'offline-demo');
                                     sessionStorage.setItem('role', 'User');
@@ -105,7 +105,8 @@
                             return true;
                         } catch (e) {
                             console.error('Login error', e);
-                            alert('Error comunicándose con el servidor: '+e.message);
+                            const base = apiBase();
+                            alert('Error comunicándose con el servidor: '+e.message + (base ? '' : '\nConfigura API con el botón de la página.'));
                             return false;
                         }
                     }
@@ -156,6 +157,8 @@
                             alert('Configuración de API eliminada. Si estás en GitHub Pages, el login usará fallback local.');
                         }
                     });
+
+                    (function(){ if(location.hostname.endsWith('github.io') && !localStorage.getItem('api_base')){ const h = document.createElement('div'); h.style.cssText='max-width:520px;margin:0 auto 10px auto;text-align:center;color:#6e48aa;font-size:0.9rem'; h.textContent='Configura tu API para login real o usa Modo Invitado'; document.querySelector('.login-container').insertAdjacentElement('beforebegin', h); } })();
                 </script>
             </body>
             </html>
