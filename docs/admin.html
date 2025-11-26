@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Panel Admin - Portafolio</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%239d50bb'/%3E%3Cpath fill='white' d='M44 24a12 12 0 1 0-24 0 12 12 0 0 0 24 0Zm2 18H30l-6 6v6h22a2 2 0 0 0 2-2V42a2 2 0 0 0-2-2Z'/%3E%3C/svg%3E" type="image/svg+xml">
   <style>
     body{font-family:'Poppins',Arial,sans-serif;background:linear-gradient(135deg,#f5f7fa,#c3cfe2);margin:0}
     .admin-card{max-width:900px;margin:2rem auto;padding:1.5rem;border-radius:18px;background:linear-gradient(#ffffff,#ffffff) padding-box,linear-gradient(135deg,#6e48aa,#9d50bb) border-box;border:1px solid transparent;box-shadow:0 20px 40px rgba(0,0,0,0.12)}
@@ -22,8 +24,11 @@
 <body>
   <div class="admin-card">
     <div class="admin-header">
-      <div class="logo-circle">A</div>
+      <div class="logo-circle"><i class="fa-solid fa-key"></i></div>
       <h1>Panel de administración</h1>
+      <div style="margin-left:auto">
+        <button id="saveExitBtn" class="small">Guardar y salir</button>
+      </div>
     </div>
     <div id="status" style="margin-bottom:.6rem;color:#6e48aa"></div>
     <section id="auth">

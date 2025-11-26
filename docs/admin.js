@@ -316,6 +316,7 @@
   const filesSection = document.getElementById('filesSection');
   const filesTableBody = document.querySelector('#filesTable tbody');
   const refreshFilesBtn = document.getElementById('refreshFiles');
+  const saveExitBtn = document.getElementById('saveExitBtn');
 
   async function loadConfig() {
     try{
@@ -457,6 +458,11 @@
   }
 
   refreshFilesBtn.addEventListener('click', loadFiles);
+
+  saveExitBtn && saveExitBtn.addEventListener('click', async ()=>{
+    try { await saveConfig(); } catch(e){}
+    window.location.href = 'login.html';
+  });
 
   filesTableBody.addEventListener('click', async (e)=>{
     const btn = e.target.closest('.fileDeleteBtn');
