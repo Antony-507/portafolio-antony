@@ -4,22 +4,36 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Panel Admin - Portafolio</title>
-  <link rel="stylesheet" href="/admin.css">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body{font-family:'Poppins',Arial,sans-serif;background:linear-gradient(135deg,#f5f7fa,#c3cfe2);margin:0}
+    .admin-card{max-width:900px;margin:2rem auto;padding:1.5rem;border-radius:18px;background:linear-gradient(#ffffff,#ffffff) padding-box,linear-gradient(135deg,#6e48aa,#9d50bb) border-box;border:1px solid transparent;box-shadow:0 20px 40px rgba(0,0,0,0.12)}
+    .admin-header{display:flex;align-items:center;gap:.8rem;margin-bottom:1rem}
+    .logo-circle{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#6e48aa,#9d50bb);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
+    h1{color:#5b3ea6;margin:0}
+    .form-inline{display:flex;gap:.6rem;flex-wrap:wrap;margin:.5rem 0}
+    .form-inline input{flex:1;min-width:220px;padding:.75rem 1rem;border:1px solid #e7e3f3;border-radius:10px;font-size:1rem}
+    .form-inline button{padding:.8rem 1rem;border:none;border-radius:10px;background:linear-gradient(135deg,#6e48aa,#9d50bb);color:#fff;font-weight:600}
+    .small{padding:.5rem .8rem;border:none;border-radius:8px;background:#eee}
+    table{width:100%;border-collapse:collapse;margin-top:.6rem}
+    th,td{padding:.5rem;border-bottom:1px solid #eee}
+  </style>
 </head>
 <body>
-  <div class="container">
-    <header>
+  <div class="admin-card">
+    <div class="admin-header">
+      <div class="logo-circle">A</div>
       <h1>Panel de administración</h1>
-      <div id="status"></div>
-    </header>
+    </div>
+    <div id="status" style="margin-bottom:.6rem;color:#6e48aa"></div>
     <section id="auth">
-      <h2>Acceso</h2>
-      <form id="loginForm">
-        <input type="email" id="email" placeholder="Email" required />
+      <div class="form-inline">
+        <input type="text" id="identifier" placeholder="Usuario o Email" required />
         <input type="password" id="password" placeholder="Contraseña" required />
-        <button type="submit">Entrar</button>
-      </form>
-      <button id="logoutBtn" style="display:none">Cerrar sesión</button>
+        <button type="button" id="adminLoginBtn">Entrar</button>
+        <button type="button" id="apiConfigBtn" class="small">Configurar API</button>
+        <button id="logoutBtn" class="small" style="display:none">Cerrar sesión</button>
+      </div>
     </section>
   <!-- Solo Managers logueados verán los controles de administración; el frontend también verifica role -->
 
@@ -123,6 +137,6 @@
 
     </section>
   </div>
-  <script src="/admin.js"></script>
+  <script src="admin.js"></script>
 </body>
 </html>
