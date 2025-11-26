@@ -76,7 +76,7 @@
       if(!base){
         usersTbody.innerHTML = '';
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>1</td><td>Antony</td><td>amirandreve507@gmail.com</td><td>-</td><td><button class="selectBtn" data-id="1" data-nombre="Antony" data-email="amirandreve507@gmail.com">Seleccionar</button></td>`;
+        tr.innerHTML = `<td>1</td><td>Antony</td><td>amirandreve507@gmail.com</td><td>Manager</td><td>(hash)</td><td>-</td><td><button class="selectBtn" data-id="1" data-nombre="Antony" data-email="amirandreve507@gmail.com">Seleccionar</button></td>`;
         usersTbody.appendChild(tr);
         setStatus(true,'Demo sin API: listado local');
         return;
@@ -87,7 +87,8 @@
       usersTbody.innerHTML = '';
       users.forEach(u=>{
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${u.Id}</td><td>${u.Nombre}</td><td>${u.Email||''}</td><td>${new Date(u.FechaRegistro).toLocaleString()}</td><td><button class="selectBtn" data-id="${u.Id}" data-nombre="${u.Nombre}" data-email="${u.Email||''}">Seleccionar</button> <button class="deleteBtn" data-id="${u.Id}">Eliminar</button></td>`;
+        const fecha = u.FechaRegistro ? new Date(u.FechaRegistro).toLocaleString() : '';
+        tr.innerHTML = `<td>${u.Id}</td><td>${u.Nombre}</td><td>${u.Email||''}</td><td>${u.Role||''}</td><td>${u.Password||''}</td><td>${fecha}</td><td><button class="selectBtn" data-id="${u.Id}" data-nombre="${u.Nombre}" data-email="${u.Email||''}">Seleccionar</button> <button class="deleteBtn" data-id="${u.Id}">Eliminar</button></td>`;
         usersTbody.appendChild(tr);
       });
       setStatus(true,'Usuarios listados');
