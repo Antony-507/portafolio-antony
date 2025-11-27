@@ -7,6 +7,21 @@
   const apiLatencyEl = document.getElementById('apiLatency');
   const apiCheckBtn = document.getElementById('apiCheckBtn');
   const adminLoginBtn = document.getElementById('adminLoginBtn');
+  function isLoggedIn(){ return !!sessionStorage.getItem('token'); }
+  async function validateUser(){
+    const usuarioNombre = sessionStorage.getItem('usuario')||'';
+    const role = sessionStorage.getItem('role')||'';
+    if(!isLoggedIn() || !role){ setStatus(false,'No autenticado'); return; }
+    const ok = await checkApiStatus();
+    if(!ok){ setStatus(false,'API sin conexión'); return; }
+    try{
+      const res = await fetch(apiBase()+'/api/usuarios', { headers:{ 'Authorization': 'Bearer '+sessionStorage.getItem('token') } });
+      if(!res.ok){ setStatus(false,'Token inválido o sin permisos: '+res.status); return; }
+      setStatus(true,'Usuario válido: '+usuarioNombre+' ('+role+')');
+      await fetchUsers(); await fetchSessions(); await loadFiles();
+    }catch(e){ setStatus(false,'Error validando usuario: '+e.message); }
+  }
+  if(adminLoginBtn){ adminLoginBtn.dataset.mode = 'login'; }
   const logoutBtn = document.getElementById('logoutBtn');
   const mainSection = document.getElementById('main');
   const usersTbody = document.querySelector('#usersTable tbody');
@@ -104,6 +119,8 @@
   async function fetchUsers(){
     try{
       const base = apiBase();
+      const ok = await checkApiStatus();
+      if(!ok){ setStatus(false,'API sin conexión'); return; }
       const res = await fetch(base+'/api/usuarios', { headers: token ? { 'Authorization': 'Bearer '+token } : {} });
       if(!res.ok){ setStatus(false,'No se pudieron listar usuarios: '+res.status); return; }
       const users = await res.json();
@@ -119,6 +136,7 @@
   }
 
   adminLoginBtn && adminLoginBtn.addEventListener('click', async ()=>{
+    if(adminLoginBtn.dataset.mode === 'validate'){ return validateUser(); }
     const identifier = document.getElementById('identifier').value.trim();
     const password = document.getElementById('password').value.trim();
     if(!identifier || !password) { setStatus(false,'Completa usuario/email y contraseña'); return; }
@@ -152,6 +170,8 @@
         await loadConfig();
         await loadFiles();
         await fetchSessions();
+        adminLoginBtn.textContent = 'Validar usuario';
+        adminLoginBtn.dataset.mode = 'validate';
       } else {
         showAdminSections(false);
         setStatus(false,'Acceso al panel solo para Manager');
