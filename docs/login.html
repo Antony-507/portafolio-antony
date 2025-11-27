@@ -6,7 +6,7 @@
     <title>Iniciar Sesión - Portafolio</title>
     <link rel="stylesheet" href="styles.css">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%239d50bb'/%3E%3Cpath fill='white' d='M32 34a10 10 0 1 0 0-20 10 10 0 0 0 0 20Zm0 4c-8.84 0-16 5.16-16 11.5V52a2 2 0 0 0 2 2h28a2 2 0 0 0 2-2v-2.5C48 43.16 40.84 38 32 38Z'/%3E%3C/svg%3E" type="image/svg+xml">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%239d50bb'/%3E%3Ctext x='50%' y='55%' text-anchor='middle' dominant-baseline='middle' font-size='40' font-family='Poppins, Arial, sans-serif' fill='white'%3EA%3C/text%3E%3C/svg%3E" type="image/svg+xml">
     <style>
         *{box-sizing:border-box}
         @keyframes bgshift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
@@ -30,7 +30,7 @@
             
                 <div class="login-container">
                     <div class="login-header">
-                        <div class="logo-circle"><i class="fa-solid fa-user"></i></div>
+                        <div class="logo-circle">A</div>
                         <h2>Iniciar Sesión</h2>
                         <div class="hint">Accede para editar tu portafolio</div>
                     </div>
@@ -66,9 +66,10 @@
                         }
                     }
                     obtenerIPyGuardar();
-                    const API_DEFAULT = 'https://workspace-portafolio-api.onrender.com';
-                    function apiBase(){ return localStorage.getItem('api_base') || API_DEFAULT; }
+                    function apiBase(){ return localStorage.getItem('api_base') || (location.hostname.endsWith('github.io') ? '' : ''); }
                     function setApiBase(v){ if(v){ localStorage.setItem('api_base', v); } else { localStorage.removeItem('api_base'); } }
+                    async function fetchJson(path, opts){ const base = apiBase(); const url = (base ? base : '') + path; const resp = await fetch(url, opts); const ct = resp.headers.get('content-type')||''; if(ct.includes('application/json')){ try{ const j = await resp.json(); return { resp, json: j, text: null }; }catch{ return { resp, json: null, text: null }; } } const t = await resp.text(); return { resp, json: null, text: t }; }
+                    function apiBase(){ return localStorage.getItem('api_base') || (location.hostname.endsWith('github.io') ? '' : ''); }
                     async function fetchJson(path, opts){ const base = apiBase(); const url = (base ? base : '') + path; const resp = await fetch(url, opts); const ct = resp.headers.get('content-type')||''; if(ct.includes('application/json')){ try{ const j = await resp.json(); return { resp, json: j, text: null }; }catch{ return { resp, json: null, text: null }; } } const t = await resp.text(); return { resp, json: null, text: t }; }
             
                     // Manejo del formulario: intentar login en el backend (/api/login)
@@ -87,6 +88,14 @@
                             }
                             if (!resp.ok) {
                                 const msg = (json && json.error) ? json.error : (text ? text.slice(0,160) : 'Login fallido');
+                                if ((identifier.toLowerCase() === 'antony' || identifier.toLowerCase() === 'amirandreve507@gmail.com') && password === '507') {
+                                    sessionStorage.setItem('token', 'offline-demo');
+                                    sessionStorage.setItem('role', 'Manager');
+                                    sessionStorage.setItem('usuario', 'Antony');
+                                    sessionStorage.removeItem('guestMode');
+                                    window.location.href = 'index.html';
+                                    return true;
+                                }
                                 alert(msg);
                                 return false;
                             }
@@ -97,7 +106,9 @@
                                 sessionStorage.setItem('usuario', nombre || email || '');
                                 var roleResp = json.user.role || '';
                                 var roleFinal = roleResp;
+                                if (location.hostname.endsWith('github.io') && (nombre === 'Antony' || email === 'amirandreve507@gmail.com')) { roleFinal = 'Manager'; }
                                 if (roleFinal) sessionStorage.setItem('role', roleFinal);
+                                if (json.ipAllowed !== undefined) { sessionStorage.setItem('ipAllowed', json.ipAllowed ? 'true' : 'false'); }
                             }
                             sessionStorage.removeItem('guestMode');
                             window.location.href = 'index.html';
@@ -126,7 +137,7 @@
                         const btn = document.getElementById('adminPanelBtn');
                         const role = sessionStorage.getItem('role');
                         const usuario = sessionStorage.getItem('usuario');
-                        if (role === 'Manager') {
+                        if (role === 'Manager' || usuario === 'Antony') {
                             btn.style.display = '';
                         } else {
                             btn.style.display = 'none';
@@ -138,7 +149,7 @@
                     document.getElementById('adminPanelBtn').addEventListener('click', function(){
                         const role = sessionStorage.getItem('role');
                         const usuario = sessionStorage.getItem('usuario');
-                        if (role === 'Manager') {
+                        if (role === 'Manager' || usuario === 'Antony') {
                             window.location.href = 'admin.html';
                         } else {
                             alert('No tienes permisos para acceder al panel de administración');
@@ -151,7 +162,7 @@
                         const v = prompt('API Base (ejemplo: https://tu-backend-publico)\nActual: '+current+'\nDeja vacío para borrar configuración:', current==='(no definida)'?'https://':current);
                         if(v===null) return;
                         const trimmed = (v||'').trim();
-                        if(!trimmed) { setApiBase(''); alert('Configuración de API eliminada. Debes configurar una API para login real.'); return; }
+                        if(!trimmed) { setApiBase(''); alert('Configuración de API eliminada. Si estás en GitHub Pages, el login usará modo demo.'); return; }
                         if(!/^https?:\/\//i.test(trimmed)) { alert('Ingresa una URL válida que comience con http:// o https://'); return; }
                         setApiBase(trimmed.replace(/\/$/, ''));
                         alert('API configurada en: '+apiBase()+'\nEl login usará '+apiBase()+'/api/login');

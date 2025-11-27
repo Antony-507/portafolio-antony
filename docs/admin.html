@@ -4,61 +4,32 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Panel Admin - Portafolio</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%239d50bb'/%3E%3Cpath fill='white' d='M44 24a12 12 0 1 0-24 0 12 12 0 0 0 24 0Zm2 18H30l-6 6v6h22a2 2 0 0 0 2-2V42a2 2 0 0 0-2-2Z'/%3E%3C/svg%3E" type="image/svg+xml">
-  <style>
-    body{font-family:'Poppins',Arial,sans-serif;background:linear-gradient(135deg,#f5f7fa,#c3cfe2);margin:0}
-    .admin-card{max-width:900px;margin:2rem auto;padding:1.5rem;border-radius:18px;background:linear-gradient(#ffffff,#ffffff) padding-box,linear-gradient(135deg,#6e48aa,#9d50bb) border-box;border:1px solid transparent;box-shadow:0 20px 40px rgba(0,0,0,0.12)}
-    .admin-header{display:flex;align-items:center;gap:.8rem;margin-bottom:1rem}
-    .logo-circle{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#6e48aa,#9d50bb);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
-    h1{color:#5b3ea6;margin:0}
-    .form-inline{display:flex;gap:.6rem;flex-wrap:wrap;margin:.5rem 0}
-    .form-inline input{flex:1;min-width:220px;padding:.75rem 1rem;border:1px solid #e7e3f3;border-radius:10px;font-size:1rem}
-    .form-inline button{padding:.8rem 1rem;border:none;border-radius:10px;background:linear-gradient(135deg,#6e48aa,#9d50bb);color:#fff;font-weight:600}
-    .small{padding:.5rem .8rem;border:none;border-radius:8px;background:#eee}
-    table{width:100%;border-collapse:collapse;margin-top:.6rem}
-    th,td{padding:.5rem;border-bottom:1px solid #eee}
-    #status.err{color:#a33}
-    #status.ok{color:#2b8a3e}
-    .section-title{display:flex;align-items:center;gap:.5rem;color:#5b3ea6}
-  </style>
+  <link rel="stylesheet" href="/admin.css">
 </head>
 <body>
-  <div class="admin-card">
-    <div class="admin-header">
-      <div class="logo-circle"><i class="fa-solid fa-key"></i></div>
+  <div class="container">
+    <header>
       <h1>Panel de administración</h1>
-      <div style="margin-left:auto">
-        <button id="saveExitBtn" class="small">Guardar y salir</button>
-      </div>
-    </div>
-    <div id="apiBanner" style="display:flex;align-items:center;gap:.6rem;background:#f7f4ff;border:1px solid #e7e3f3;border-radius:12px;padding:.6rem 1rem;margin-bottom:10px">
-      <span id="apiStatusBadge" style="display:inline-block;padding:.35rem .6rem;border-radius:999px;background:#ddd;color:#333;font-weight:600">API: verificando…</span>
-      <span id="apiLatency" style="color:#6e48aa"></span>
-      <button id="apiCheckBtn" class="small" style="margin-left:auto">Verificar API</button>
-    </div>
-    <div id="status" style="margin-bottom:.6rem;color:#6e48aa"></div>
+      <div id="status"></div>
+    </header>
     <section id="auth">
-      <div class="form-inline">
-        <input type="text" id="identifier" placeholder="Usuario o Email" required />
+      <h2>Acceso</h2>
+      <form id="loginForm">
+        <input type="email" id="email" placeholder="Email" required />
         <input type="password" id="password" placeholder="Contraseña" required />
-        <button type="button" id="adminLoginBtn">Entrar</button>
-        <button type="button" id="apiConfigBtn" class="small">Configurar API</button>
-        <button id="logoutBtn" class="small" style="display:none">Cerrar sesión</button>
-        <button id="checkMyIPBtn" class="small" title="Consultar IP real">Ver mi IP</button>
-      </div>
+        <button type="submit">Entrar</button>
+      </form>
+      <button id="logoutBtn" style="display:none">Cerrar sesión</button>
     </section>
   <!-- Solo Managers logueados verán los controles de administración; el frontend también verifica role -->
 
     <section id="main" style="display:none">
       <div style="display:flex; gap:12px; align-items:center; justify-content:space-between;">
-        <h2 class="section-title"><i class="fa-solid fa-users"></i> Usuarios</h2>
+        <h2>Usuarios</h2>
         <div style="margin-left:auto">
           <button id="btnAgregar" class="small">Agregar</button>
           <button id="btnModificar" class="small">Modificar</button>
           <button id="btnEliminar" class="small">Eliminar</button>
-          <button id="bootstrapManagerBtn" class="small" title="Crear usuario Manager en producción">Crear Manager (prod)</button>
         </div>
       </div>
 
@@ -68,7 +39,7 @@
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <input type="text" id="newNombre" placeholder="Usuario (obligatorio)" required />
             <input type="password" id="newPassword" placeholder="Contraseña (obligatorio)" required />
-            <input type="email" id="newEmail" placeholder="Gmail" required />
+            <input type="email" id="newEmail" placeholder="Gmail (opcional)" />
             <input type="text" id="newIP" placeholder="IP (obligatorio)" required />
           </div>
           <div style="margin-top:8px;"><button type="submit">Crear usuario</button> <button type="button" id="cancelAgregar">Cancelar</button></div>
@@ -99,27 +70,17 @@
         <div id="deleteHint">Selecciona un usuario en la lista y pulsa Eliminar.</div>
       </div>
 
-      <div id="bootstrapPanel" class="panel" style="display:none; margin-top:12px;">
-        <h3>Crear/Actualizar Manager (producción)</h3>
-        <div class="form-inline">
-          <input type="email" id="bootstrapEmail" placeholder="Email del Manager" value="amirandreve507@gmail.com" />
-          <input type="password" id="bootstrapPassword" placeholder="Password temporal" />
-          <button id="bootstrapExecBtn">Crear/Actualizar Manager</button>
-        </div>
-        <small id="bootstrapHint" style="color:#6e48aa">Se asigna rol Manager y opcionalmente se vincula tu IP como ADMIN_IP.</small>
-      </div>
-
       <div style="margin-top:12px;">
         <button id="refreshUsers">Refrescar usuarios</button>
       </div>
       <table id="usersTable">
-        <thead><tr><th>Id</th><th>Nombre</th><th>Email</th><th>Role</th><th>Password (hash)</th><th>FechaRegistro</th><th>Acciones</th></tr></thead>
+        <thead><tr><th>Id</th><th>Nombre</th><th>Email</th><th>FechaRegistro</th><th>Acciones</th></tr></thead>
         <tbody></tbody>
       </table>
 
       <div style="margin-top:14px;color:#666;font-size:0.95rem;">Nota: las acciones de administración requieren que la petición provenga de la IP configurada como `ADMIN_IP` en el servidor.</div>
       <section id="configSection" style="margin-top:18px;border-top:1px solid #eee;padding-top:12px;">
-        <h2 class="section-title"><i class="fa-solid fa-server"></i> Configuración del servidor</h2>
+        <h2>Configuración del servidor</h2>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
           <input type="text" id="cfg_dbServer" placeholder="DB Server (p.ej. (localdb)\\MSSQLLocalDB)" style="min-width:320px" />
           <input type="text" id="cfg_dbUser" placeholder="DB User (opcional)" />
@@ -149,19 +110,19 @@
       </section>
 
       <section id="filesSection" style="margin-top:18px; display:none;">
-        <h2 class="section-title"><i class="fa-solid fa-file"></i> Archivos subidos</h2>
+        <h2>Archivos subidos</h2>
         <div style="margin-bottom:8px;"><button id="refreshFiles">Refrescar lista de archivos</button></div>
         <table id="filesTable"><thead><tr><th>Id</th><th>FileName</th><th>UsuarioId</th><th>Storage</th><th>UploadedAt</th><th>Acciones</th></tr></thead><tbody></tbody></table>
       </section>
 
       <section id="sessionsSection" style="margin-top:18px; display:none;">
-        <h2 class="section-title"><i class="fa-solid fa-user-clock"></i> Sesiones iniciadas</h2>
+        <h2>Sesiones iniciadas</h2>
         <div style="margin-bottom:8px;"><button id="refreshSessions">Refrescar sesiones</button></div>
         <table id="sessionsTable"><thead><tr><th>UsuarioId</th><th>Rol</th><th>IP</th><th>Agente</th><th>Creada</th><th>Último uso</th></tr></thead><tbody></tbody></table>
       </section>
 
     </section>
   </div>
-  <script src="admin.js"></script>
+  <script src="/admin.js"></script>
 </body>
 </html>

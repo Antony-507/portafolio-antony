@@ -1,14 +1,8 @@
 (function(){
-  const API_DEFAULT = 'https://workspace-portafolio-api.onrender.com';
-  const apiBase = () => localStorage.getItem('api_base') || API_DEFAULT;
-  async function fetchJson(path, opts){ const base = apiBase(); const url = (base?base:'') + path; const resp = await fetch(url, opts); const ct = resp.headers.get('content-type')||''; if(ct.includes('application/json')){ try{ const j = await resp.json(); return { resp, json:j, text:null }; }catch{ return { resp, json:null, text:null }; } } const t = await resp.text(); return { resp, json:null, text:t }; }
+  const apiBase = () => localStorage.getItem('api_base') || (location.hostname.endsWith('github.io') ? 'http://localhost:3001' : '');
   const statusEl = document.getElementById('status');
-  const apiStatusBadge = document.getElementById('apiStatusBadge');
-  const apiLatencyEl = document.getElementById('apiLatency');
-  const apiCheckBtn = document.getElementById('apiCheckBtn');
-  const adminLoginBtn = document.getElementById('adminLoginBtn');
+  const loginForm = document.getElementById('loginForm');
   const logoutBtn = document.getElementById('logoutBtn');
-  const checkMyIPBtn = document.getElementById('checkMyIPBtn');
   const mainSection = document.getElementById('main');
   const usersTbody = document.querySelector('#usersTable tbody');
   const refreshBtn = document.getElementById('refreshUsers');
@@ -17,9 +11,6 @@
   const btnAgregar = document.getElementById('btnAgregar');
   const btnModificar = document.getElementById('btnModificar');
   const btnEliminar = document.getElementById('btnEliminar');
-  const bootstrapManagerBtn = document.getElementById('bootstrapManagerBtn');
-  const bootstrapPanel = document.getElementById('bootstrapPanel');
-  const bootstrapExecBtn = document.getElementById('bootstrapExecBtn');
   const panelAgregar = document.getElementById('panelAgregar');
   const panelModificar = document.getElementById('panelModificar');
   const panelEliminar = document.getElementById('panelEliminar');
@@ -28,34 +19,7 @@
   let token = null;
   let isAdminRemote = false;
   let userRole = null;
-  function setStatus(ok, txt){
-    statusEl.className = ok ? 'ok' : 'err';
-    if(!ok && /404/.test(String(txt))){
-      const base = apiBase();
-      statusEl.innerHTML = 'No se pudieron listar usuarios: 404 · <a href="#" id="statusConfigLink">Configurar API</a>';
-      const l = document.getElementById('statusConfigLink');
-      if(l){ l.onclick = (e)=>{ e.preventDefault(); const btn=document.getElementById('apiConfigBtn'); if(btn) btn.click(); }; }
-    } else {
-      statusEl.textContent = txt;
-    }
-  }
-
-  async function checkApiStatus(){
-    const start = performance.now();
-    let ok = false, db = '', latency = 0;
-    try{
-      const res = await fetch(apiBase()+'/health', { cache:'no-store' });
-      latency = Math.round(performance.now()-start);
-      if(res.ok){ const j = await res.json(); ok = !!j.ok; db = j.db || ''; }
-    }catch(e){ latency = Math.round(performance.now()-start); ok = false; }
-    if(apiStatusBadge){
-      apiStatusBadge.textContent = ok ? `API: conectada (${db||'OK'})` : 'API: sin conexión';
-      apiStatusBadge.style.background = ok ? '#d7f3e3' : '#ffe0e0';
-      apiStatusBadge.style.color = ok ? '#2b8a3e' : '#a33';
-    }
-    if(apiLatencyEl){ apiLatencyEl.textContent = `Latencia: ${latency} ms`; }
-    return ok;
-  }
+  function setStatus(ok, txt){ statusEl.textContent = txt; statusEl.className = ok ? 'ok' : 'err'; }
 
   // Consultar si la petición viene de ADMIN_IP (para mostrar/ocultar botones admin)
   async function checkAdminIp() {
@@ -107,68 +71,48 @@
 
   async function fetchUsers(){
     try{
-      
-      const base = apiBase();
-      const endpoints = ['/api/usuarios','/api/users','/usuarios','/users'];
-      let users = null, lastStatus = 0;
-      for(const ep of endpoints){
-        const res = await fetch(base+ep, { headers: token ? { 'Authorization': 'Bearer '+token } : {} });
-        lastStatus = res.status;
-        if(res.ok){ users = await res.json(); break; }
-        if(res.status === 401){ setStatus(false,'No autorizado'); return; }
-      }
-      if(!users){ setStatus(false,'No se pudieron listar usuarios: '+lastStatus); return; }
+      const res = await fetch(apiBase()+'/api/usuarios', { headers: token ? { 'Authorization': 'Bearer '+token } : {} });
+      if(!res.ok) throw new Error('Error: '+res.status);
+      const users = await res.json();
       usersTbody.innerHTML = '';
       users.forEach(u=>{
         const tr = document.createElement('tr');
-        const fecha = u.FechaRegistro ? new Date(u.FechaRegistro).toLocaleString() : '';
-        tr.innerHTML = `<td>${u.Id}</td><td>${u.Nombre}</td><td>${u.Email||''}</td><td>${u.Role||''}</td><td>${u.Password||''}</td><td>${fecha}</td><td><button class="selectBtn" data-id="${u.Id}" data-nombre="${u.Nombre}" data-email="${u.Email||''}">Seleccionar</button> <button class="deleteBtn" data-id="${u.Id}">Eliminar</button></td>`;
+        tr.innerHTML = `<td>${u.Id}</td><td>${u.Nombre}</td><td>${u.Email||''}</td><td>${new Date(u.FechaRegistro).toLocaleString()}</td><td><button class="selectBtn" data-id="${u.Id}" data-nombre="${u.Nombre}" data-email="${u.Email||''}">Seleccionar</button> <button class="deleteBtn" data-id="${u.Id}">Eliminar</button></td>`;
         usersTbody.appendChild(tr);
       });
       setStatus(true,'Usuarios listados');
     }catch(e){ setStatus(false,'No se pudieron listar usuarios: '+e.message); }
   }
 
-  adminLoginBtn && adminLoginBtn.addEventListener('click', async ()=>{
-    const identifier = document.getElementById('identifier').value.trim();
-    const password = document.getElementById('password').value.trim();
-    if(!identifier || !password) { setStatus(false,'Completa usuario/email y contraseña'); return; }
+  loginForm.addEventListener('submit', async (ev)=>{
+    ev.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
     try{
-      const isEmail = identifier.includes('@');
-      let payload = isEmail ? { email: identifier, password } : { username: identifier, password };
-      let { resp, json, text } = await fetchJson('/api/login', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
-      if(!resp.ok && !isEmail && json && typeof json.error === 'string' && json.error.toLowerCase().includes('faltan campos')){
-        payload = { email: identifier, password };
-        ({ resp, json, text } = await fetchJson('/api/login', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) }));
-      }
-      if(!resp.ok && (identifier.toLowerCase()==='antony' || identifier.toLowerCase()==='amirandreve507@gmail.com') && password==='507'){
-        token = 'offline-demo'; userRole = 'Manager';
-        sessionStorage.setItem('token', token); sessionStorage.setItem('role', userRole); sessionStorage.setItem('usuario','Antony'); sessionStorage.removeItem('guestMode');
-        logoutBtn.style.display='inline-block';
-        setStatus(true,'Autenticado como Antony (Manager)');
-      } else {
-        if(!resp.ok) return setStatus(false, (json && json.error) ? json.error : (text ? text.slice(0,140) : 'Login falló'));
-        token = json && json.token ? json.token : null;
-        const usuarioNombre = json && json.user && (json.user.nombre || json.user.email || json.user.Email) || '';
-        userRole = json && json.user && json.user.role || '';
-        sessionStorage.setItem('token', token || ''); sessionStorage.setItem('role', userRole || ''); sessionStorage.setItem('usuario', usuarioNombre || ''); sessionStorage.removeItem('guestMode');
-        logoutBtn.style.display='inline-block';
-        setStatus(true,'Autenticado como '+usuarioNombre+' ('+(userRole||'')+')');
-      }
-      if (userRole === 'Manager') {
+      const res = await fetch(apiBase()+'/api/login', { method:'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ email, password }) });
+      const data = await res.json();
+      if(!res.ok) return setStatus(false, data.error || 'Login falló');
+      token = data.token;
+      userRole = data.usuario && data.usuario.role ? data.usuario.role : null;
+      loginForm.style.display='none'; logoutBtn.style.display='inline-block';
+      setStatus(true,'Autenticado como '+data.usuario.nombre + ' (' + userRole + ')');
+      // comprobar si la IP es ADMIN_IP (remote) y si el rol es Manager para mostrar panel
+      await checkAdminIp();
+      if (userRole === 'Manager' && isAdminRemote) {
         showAdminSections(true);
         fetchUsers();
         await loadConfig();
         await loadFiles();
         await fetchSessions();
       } else {
+        // no tiene permisos para ver panel admin
         showAdminSections(false);
-        setStatus(false,'Acceso al panel solo para Manager');
+        setStatus(false, 'Acceso al panel solo para Manager desde ADMIN_IP');
       }
-    }catch(e){ setStatus(false,'Error al autenticar: '+e.message + (apiBase()? '' : '\nConfigura API con el botón.')); }
+    }catch(e){ setStatus(false,'Error al autenticar: '+e.message); }
   });
 
-  logoutBtn.addEventListener('click', ()=>{ token=null; sessionStorage.removeItem('token'); sessionStorage.removeItem('role'); sessionStorage.removeItem('usuario'); logoutBtn.style.display='none'; mainSection.style.display='none'; setStatus(false,'Sesión cerrada'); });
+  logoutBtn.addEventListener('click', ()=>{ token=null; loginForm.style.display='block'; logoutBtn.style.display='none'; mainSection.style.display='none'; setStatus(false,'Sesión cerrada'); });
 
   refreshBtn.addEventListener('click', fetchUsers);
   refreshSessionsBtn && refreshSessionsBtn.addEventListener('click', fetchSessions);
@@ -206,30 +150,6 @@
     panelEliminar.style.display = panelEliminar.style.display === 'none' ? '' : 'none';
     panelAgregar.style.display = 'none';
     panelModificar.style.display = 'none';
-  });
-
-  bootstrapManagerBtn && bootstrapManagerBtn.addEventListener('click', ()=>{
-    bootstrapPanel.style.display = bootstrapPanel.style.display === 'none' ? '' : 'none';
-  });
-
-  bootstrapExecBtn && bootstrapExecBtn.addEventListener('click', async ()=>{
-    const email = document.getElementById('bootstrapEmail').value.trim();
-    const password = document.getElementById('bootstrapPassword').value.trim();
-    if(!email || !password) { setStatus(false,'Completa email y password'); return; }
-    let ip = null;
-    try{ const r = await fetch(apiBase()+'/api/my-ip'); const j = await r.json(); ip = j && j.ip; }catch{}
-    try{
-      if(token === 'offline-demo'){ setStatus(false,'Usa un backend real: el demo no puede crear usuarios'); return; }
-      const res = await fetch(apiBase()+'/admin/upsert-manager', { method:'POST', headers: { 'Content-Type':'application/json', 'Authorization': token ? 'Bearer '+token : '' }, body: JSON.stringify({ email, password, nombre: 'Antony', ip }) });
-      const ct = res.headers.get('content-type')||'';
-      let data = null, text = '';
-      if(ct.includes('application/json')){ try{ data = await res.json(); }catch{} }
-      else { text = await res.text(); }
-      if(!res.ok){ setStatus(false, (data && data.error) || (text ? text.slice(0,140) : 'Error creando Manager')); return; }
-      setStatus(true,'Manager creado/actualizado');
-      bootstrapPanel.style.display='none';
-      fetchUsers();
-    }catch(e){ setStatus(false,'Error creando Manager: '+e.message); }
   });
 
   document.getElementById('cancelAgregar').addEventListener('click', ()=>{ createUserForm.reset(); panelAgregar.style.display = 'none'; });
@@ -303,33 +223,6 @@
 
   // Al cargar, intentar listar (sin token mostrará la lista pública si existe)
   checkAdminIp().then(()=>{ fetchUsers(); fetchSessions(); });
-  checkApiStatus();
-  apiCheckBtn && apiCheckBtn.addEventListener('click', checkApiStatus);
-
-  checkMyIPBtn && checkMyIPBtn.addEventListener('click', async ()=>{
-    try{
-      const res = await fetch(apiBase()+'/api/my-ip');
-      const ct = res.headers.get('content-type')||'';
-      if(res.ok && ct.includes('application/json')){ const j = await res.json(); setStatus(true,'Tu IP real: '+(j.ip||'desconocida')); return; }
-      const text = await res.text(); if(res.ok){ setStatus(true,'Tu IP (texto): '+text.slice(0,80)); return; }
-      throw new Error('Status '+res.status);
-    }catch(e){
-      try{ const r = await fetch('https://api.ipify.org?format=json'); const j = await r.json(); setStatus(true,'Tu IP (ipify): '+(j.ip||'desconocida')); }
-      catch(err){ setStatus(false,'No se pudo consultar IP: '+(e.message||e)); }
-    }
-  });
-
-  // Configurar API desde el panel
-  const apiConfigBtn = document.getElementById('apiConfigBtn');
-  apiConfigBtn && apiConfigBtn.addEventListener('click', ()=>{
-    let current = apiBase() || '(no definida)';
-    if(current && current.trim().startsWith('{')) { localStorage.removeItem('api_base'); current='(no definida)'; }
-    const v = prompt('API Base (ejemplo: https://tu-backend-publico)\nActual: '+current+'\nDeja vacío para borrar configuración:', current==='(no definida)'?'https://':current);
-    if(v===null) return; const trimmed=(v||'').trim();
-    if(!trimmed){ localStorage.removeItem('api_base'); alert('API eliminada'); return; }
-    if(!/^https?:\/\//i.test(trimmed)){ alert('Ingresa URL válida (http/https)'); return; }
-    localStorage.setItem('api_base', trimmed.replace(/\/$/,'')); alert('API configurada en: '+(localStorage.getItem('api_base')));
-  });
 
   async function loadUserIps(usuarioId) {
     try{
@@ -387,11 +280,10 @@
   const filesSection = document.getElementById('filesSection');
   const filesTableBody = document.querySelector('#filesTable tbody');
   const refreshFilesBtn = document.getElementById('refreshFiles');
-  const saveExitBtn = document.getElementById('saveExitBtn');
 
   async function loadConfig() {
     try{
-      const res = await fetch(apiBase()+'/admin/config');
+      const res = await fetch('/admin/config');
       if(!res.ok) return; // no mostrar error público
       const cfg = await res.json();
       cfgDbServer.value = cfg.dbServer || '';
@@ -413,7 +305,7 @@
     };
     cfgSaveBtn.disabled = true; cfgOutput.textContent = 'Guardando...';
     try{
-      const res = await fetch(apiBase()+'/admin/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      const res = await fetch('/admin/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
       const data = await res.json();
       if(!res.ok) { cfgOutput.textContent = 'Error: '+(data.error||res.status); cfgSaveBtn.disabled = false; return; }
       cfgOutput.textContent = 'Configuración guardada.';
@@ -425,11 +317,11 @@
     cfgTestBtn.disabled = true; cfgOutput.textContent = 'Probando conexión...';
     try{
       const payload = { dbServer: cfgDbServer.value, dbUser: cfgDbUser.value, dbPassword: cfgDbPassword.value, useWindowsAuth: !!cfgUseWin.checked };
-      const res = await fetch(apiBase()+'/admin/config', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      const res = await fetch('/admin/config', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
       const data = await res.json();
       if (!res.ok) { cfgOutput.textContent = 'Conexión fallida: '+(data.error||res.status); cfgTestBtn.disabled = false; return; }
       // If config applied without error, try a lightweight ping: call /api/is-admin-ip
-      const ping = await fetch(apiBase()+'/api/is-admin-ip');
+      const ping = await fetch('/api/is-admin-ip');
       if (!ping.ok) { cfgOutput.textContent = 'Conexión aplicada, pero ping falló'; cfgTestBtn.disabled = false; return; }
       cfgOutput.textContent = 'Conexión OK y aplicada temporalmente.';
       cfgTestBtn.disabled = false;
@@ -440,7 +332,7 @@
     if(!confirm('Ejecutar db_init.sql en la instancia configurada? Esto puede crear la base de datos y tablas.')) return;
     runDbInitBtn.disabled = true; cfgOutput.textContent = 'Ejecutando script...';
     try{
-      const res = await fetch(apiBase()+'/admin/run-db-init', { method:'POST' });
+      const res = await fetch('/admin/run-db-init', { method:'POST' });
       const data = await res.json();
       if(!res.ok) { cfgOutput.textContent = 'Error: '+(data.error||res.status); runDbInitBtn.disabled = false; return; }
       cfgOutput.textContent = data.mensaje || 'db_init ejecutado.';
@@ -453,7 +345,7 @@
     cfgApplyBothBtn.disabled = true; cfgOutput.textContent = 'Guardando configuración y aplicando DB...';
     try{
       await saveConfig();
-      const r = await fetch(apiBase()+'/admin/run-db-init', { method:'POST' });
+      const r = await fetch('/admin/run-db-init', { method:'POST' });
       const data = await r.json();
       if (!r.ok) { cfgOutput.textContent = 'Error ejecutando db_init: '+(data.error||r.status); cfgApplyBothBtn.disabled = false; return; }
       cfgOutput.textContent = 'Configuración guardada y db_init ejecutado.';
@@ -473,7 +365,7 @@
     if(!loginName || !password) { cfgOutput.textContent = 'Login y contraseña requeridos'; return; }
     createLoginBtn.disabled = true; cfgOutput.textContent = 'Creando login...';
     try{
-      const res = await fetch(apiBase()+'/admin/create-sql-login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ loginName, password }) });
+      const res = await fetch('/admin/create-sql-login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ loginName, password }) });
       const data = await res.json();
       if(!res.ok) { cfgOutput.textContent = 'Error: '+(data.error||res.status); createLoginBtn.disabled = false; return; }
       cfgOutput.textContent = data.mensaje || 'Login creado';
@@ -515,7 +407,7 @@
   // Files list management
   async function loadFiles() {
     try{
-      const res = await fetch(apiBase()+'/api/files', { headers: token ? { 'Authorization': 'Bearer '+token } : {} });
+      const res = await fetch('/admin/files', { headers: token ? { 'Authorization': 'Bearer '+token } : {} });
       if(!res.ok) { filesTableBody.innerHTML = ''; return; }
       const files = await res.json();
       filesTableBody.innerHTML = '';
@@ -530,19 +422,15 @@
 
   refreshFilesBtn.addEventListener('click', loadFiles);
 
-  saveExitBtn && saveExitBtn.addEventListener('click', async ()=>{
-    try { await saveConfig(); } catch(e){}
-    window.location.href = 'login.html';
-  });
-
   filesTableBody.addEventListener('click', async (e)=>{
     const btn = e.target.closest('.fileDeleteBtn');
     if(!btn) return;
     const id = btn.dataset.id;
     if(!confirm('¿Eliminar archivo id '+id+'?')) return;
     try{
-      const res = await fetch(apiBase()+'/api/files/'+parseInt(id,10), { method:'DELETE', headers: { 'Authorization': token ? 'Bearer '+token : '' } });
-      if(!res.ok) { try{ const data = await res.json(); cfgOutput.textContent = 'Error borrando archivo: '+(data.error||res.status); }catch{ cfgOutput.textContent = 'Error borrando archivo: '+res.status; } return; }
+      const res = await fetch('/admin/delete-file', { method:'POST', headers: {'Content-Type':'application/json', 'Authorization': token ? 'Bearer '+token : '' }, body: JSON.stringify({ fileId: parseInt(id,10) }) });
+      const data = await res.json();
+      if(!res.ok) { cfgOutput.textContent = 'Error borrando archivo: '+(data.error||res.status); return; }
       cfgOutput.textContent = 'Archivo eliminado';
       loadFiles();
     }catch(e){ cfgOutput.textContent = 'Error borrando archivo: '+e.message; }

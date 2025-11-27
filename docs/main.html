@@ -87,13 +87,11 @@
                 showSection(this.id.replace('menu','').toLowerCase());
             };
         });
-        const API_DEFAULT = 'https://workspace-portafolio-api.onrender.com';
-        const apiBase = ()=> localStorage.getItem('api_base') || API_DEFAULT;
-        // Subida real: requiere token y rol
+        // Subida real: requiere token y rol/IP permitido
         const token = sessionStorage.getItem('token');
         const role = sessionStorage.getItem('role');
-        const usuario = sessionStorage.getItem('usuario');
-        if((role === 'Manager' || usuario === 'Antony') && sessionStorage.getItem('guestMode') !== 'true') {
+        const ipAllowed = sessionStorage.getItem('ipAllowed') === 'true';
+        if((role === 'Manager' || ipAllowed) && sessionStorage.getItem('guestMode') !== 'true') {
             document.getElementById('uploadBtnLi').style.display = 'block';
             document.getElementById('uploadBtn').addEventListener('click', function() {
                 const input = document.createElement('input');
@@ -104,7 +102,7 @@
                         if(!(file.type.startsWith('image') || file.type.startsWith('video'))) { alert('Solo PNG/JPEG o MP4'); continue; }
                         const fd = new FormData(); fd.append('file', file);
                         try{
-                          const resp = await fetch(apiBase()+'/api/upload', { method:'POST', headers: token ? { 'Authorization':'Bearer '+token } : {}, body: fd });
+                          const resp = await fetch((localStorage.getItem('api_base')|| (location.hostname.endsWith('github.io')?'http://localhost:3001':''))+'/api/upload', { method:'POST', headers: token ? { 'Authorization':'Bearer '+token } : {}, body: fd });
                           const j = await resp.json(); if(!resp.ok){ alert(j.error||'Fallo al subir'); continue; }
                           appendToGallery(j.url);
                         }catch(err){ alert('Error de red: '+err.message); }
@@ -166,7 +164,7 @@
         }
         async function loadFiles(){
           try{
-            const resp = await fetch(apiBase()+'/api/files'); const files = await resp.json();
+            const resp = await fetch((localStorage.getItem('api_base')|| (location.hostname.endsWith('github.io')?'http://localhost:3001':''))+'/api/files'); const files = await resp.json();
             ['disenos','juegos','desarrollos','educacion','personales'].forEach(s=>{ const g=document.getElementById('gallery-'+s); if(g) g.innerHTML=''; });
             files.forEach(f=>{ appendToGallery(f.Url || f.url); });
           }catch(e){}
