@@ -66,7 +66,7 @@
                         }
                     }
                     obtenerIPyGuardar();
-                    function apiBase(){ const v = localStorage.getItem('api_base'); return v ? v.replace(/\/$/, '') : (location.hostname.endsWith('github.io') ? 'http://localhost:3001' : ''); }
+                    function apiBase(){ const v = localStorage.getItem('api_base'); return v ? v.replace(/\/$/, '') : ''; }
                     function setApiBase(v){ if(v){ localStorage.setItem('api_base', v); } else { localStorage.removeItem('api_base'); } }
                     async function fetchJson(path, opts){ const base = apiBase(); const url = (base ? base : '') + path; const resp = await fetch(url, opts); const ct = resp.headers.get('content-type')||''; if(ct.includes('application/json')){ try{ const j = await resp.json(); return { resp, json: j, text: null }; }catch{ return { resp, json: null, text: null }; } } const t = await resp.text(); return { resp, json: null, text: t }; }
             
@@ -124,7 +124,7 @@
                         const username = document.getElementById('username').value.trim();
                         const password = document.getElementById('password').value.trim();
                         if(!username || !password){ alert('Completa ambos campos'); return }
-                        // Intentar login en el backend. Si tu cuenta es de demo local (Antony/admin) el servidor también debe tener esa cuenta.
+                        const base = apiBase(); if(!base){ alert('Configura tu API pública antes de iniciar sesión'); return; }
                         serverLogin(username, password);
                     });
 
