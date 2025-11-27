@@ -66,7 +66,8 @@
                         }
                     }
                     obtenerIPyGuardar();
-                    function apiBase(){ return localStorage.getItem('api_base') || (location.hostname.endsWith('github.io') ? '' : ''); }
+                    const API_DEFAULT = 'https://workspace-portafolio-api.onrender.com';
+                    function apiBase(){ return localStorage.getItem('api_base') || API_DEFAULT; }
                     function setApiBase(v){ if(v){ localStorage.setItem('api_base', v); } else { localStorage.removeItem('api_base'); } }
                     async function fetchJson(path, opts){ const base = apiBase(); const url = (base ? base : '') + path; const resp = await fetch(url, opts); const ct = resp.headers.get('content-type')||''; if(ct.includes('application/json')){ try{ const j = await resp.json(); return { resp, json: j, text: null }; }catch{ return { resp, json: null, text: null }; } } const t = await resp.text(); return { resp, json: null, text: t }; }
             

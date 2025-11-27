@@ -1,5 +1,6 @@
 (function(){
-  const apiBase = () => localStorage.getItem('api_base') || (location.hostname.endsWith('github.io') ? '' : '');
+  const API_DEFAULT = 'https://workspace-portafolio-api.onrender.com';
+  const apiBase = () => localStorage.getItem('api_base') || API_DEFAULT;
   async function fetchJson(path, opts){ const base = apiBase(); const url = (base?base:'') + path; const resp = await fetch(url, opts); const ct = resp.headers.get('content-type')||''; if(ct.includes('application/json')){ try{ const j = await resp.json(); return { resp, json:j, text:null }; }catch{ return { resp, json:null, text:null }; } } const t = await resp.text(); return { resp, json:null, text:t }; }
   const statusEl = document.getElementById('status');
   const adminLoginBtn = document.getElementById('adminLoginBtn');
@@ -83,14 +84,6 @@
   async function fetchUsers(){
     try{
       const base = apiBase();
-      if(!base || /github\.io/i.test(base)){
-        usersTbody.innerHTML = '';
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>1</td><td>Antony</td><td>amirandreve507@gmail.com</td><td>Manager</td><td>(hash)</td><td>-</td><td><button class="selectBtn" data-id="1" data-nombre="Antony" data-email="amirandreve507@gmail.com">Seleccionar</button></td>`;
-        usersTbody.appendChild(tr);
-        setStatus(true,'Demo sin API: configura tu backend público con el botón');
-        return;
-      }
       const res = await fetch(base+'/api/usuarios', { headers: token ? { 'Authorization': 'Bearer '+token } : {} });
       if(!res.ok){ setStatus(false,'No se pudieron listar usuarios: '+res.status); return; }
       const users = await res.json();
