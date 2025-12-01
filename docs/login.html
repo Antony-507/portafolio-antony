@@ -66,10 +66,9 @@
                         }
                     }
                     obtenerIPyGuardar();
-                    function apiBase(){ return localStorage.getItem('api_base') || (location.hostname.endsWith('github.io') ? '' : ''); }
+                    const API_DEFAULT = 'https://workspace-portafolio-api.onrender.com';
+                    function apiBase(){ const v=(localStorage.getItem('api_base')||'').trim(); if(!/^https?:\/\//i.test(v) || /github\.io/i.test(v)) return API_DEFAULT; return v.replace(/\/$/,''); }
                     function setApiBase(v){ if(v){ localStorage.setItem('api_base', v); } else { localStorage.removeItem('api_base'); } }
-                    async function fetchJson(path, opts){ const base = apiBase(); const url = (base ? base : '') + path; const resp = await fetch(url, opts); const ct = resp.headers.get('content-type')||''; if(ct.includes('application/json')){ try{ const j = await resp.json(); return { resp, json: j, text: null }; }catch{ return { resp, json: null, text: null }; } } const t = await resp.text(); return { resp, json: null, text: t }; }
-                    function apiBase(){ return localStorage.getItem('api_base') || (location.hostname.endsWith('github.io') ? '' : ''); }
                     async function fetchJson(path, opts){ const base = apiBase(); const url = (base ? base : '') + path; const resp = await fetch(url, opts); const ct = resp.headers.get('content-type')||''; if(ct.includes('application/json')){ try{ const j = await resp.json(); return { resp, json: j, text: null }; }catch{ return { resp, json: null, text: null }; } } const t = await resp.text(); return { resp, json: null, text: t }; }
             
                     // Manejo del formulario: intentar login en el backend (/api/login)
@@ -150,10 +149,10 @@
                     document.getElementById('apiConfigBtn').addEventListener('click', async function(){
                         let current = apiBase() || '(no definida)';
                         if(current && current.trim().startsWith('{')) { localStorage.removeItem('api_base'); current = '(no definida)'; }
-                        const v = prompt('API Base (ejemplo: https://tu-backend-publico)\nActual: '+current+'\nDeja vacío para borrar configuración:', current==='(no definida)'?'https://':current);
+                        const v = prompt('API Base (ejemplo: https://tu-backend-publico)\nActual: '+current+'\nDeja vacío para usar la API predeterminada:', current==='(no definida)'?API_DEFAULT:current);
                         if(v===null) return;
                         const trimmed = (v||'').trim();
-                        if(!trimmed) { setApiBase(''); alert('Configuración de API eliminada. Si estás en GitHub Pages, el login usará modo demo.'); return; }
+                        if(!trimmed) { setApiBase(''); alert('Usando API predeterminada: '+API_DEFAULT); return; }
                         if(!/^https?:\/\//i.test(trimmed)) { alert('Ingresa una URL válida que comience con http:// o https://'); return; }
                         setApiBase(trimmed.replace(/\/$/, ''));
                         alert('API configurada en: '+apiBase()+'\nEl login usará '+apiBase()+'/api/login');
