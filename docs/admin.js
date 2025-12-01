@@ -1,5 +1,6 @@
 (function(){
-  const apiBase = () => localStorage.getItem('api_base') || (location.hostname.endsWith('github.io') ? 'http://localhost:3001' : '');
+  const API_DEFAULT = 'https://workspace-portafolio-api.onrender.com';
+  const apiBase = () => { const v=(localStorage.getItem('api_base')||'').trim(); if(!/^https?:\/\//i.test(v) || /github\.io/i.test(v)) return API_DEFAULT; return v.replace(/\/$/,''); };
   const statusEl = document.getElementById('status');
   const loginForm = document.getElementById('loginForm');
   const logoutBtn = document.getElementById('logoutBtn');
@@ -93,9 +94,9 @@
       const data = await res.json();
       if(!res.ok) return setStatus(false, data.error || 'Login falló');
       token = data.token;
-      userRole = data.usuario && data.usuario.role ? data.usuario.role : null;
+      userRole = data.user && data.user.role ? data.user.role : null;
       loginForm.style.display='none'; logoutBtn.style.display='inline-block';
-      setStatus(true,'Autenticado como '+data.usuario.nombre + ' (' + userRole + ')');
+      setStatus(true,'Autenticado como '+((data.user && (data.user.nombre||data.user.email))||'') + ' (' + (userRole||'') + ')');
       // comprobar si la IP es ADMIN_IP (remote) y si el rol es Manager para mostrar panel
       await checkAdminIp();
       if (userRole === 'Manager' && isAdminRemote) {
@@ -407,7 +408,7 @@
   // Files list management
   async function loadFiles() {
     try{
-      const res = await fetch('/admin/files', { headers: token ? { 'Authorization': 'Bearer '+token } : {} });
+      const res = await fetch(apiBase()+'/api/files', { headers: token ? { 'Authorization': 'Bearer '+token } : {} });
       if(!res.ok) { filesTableBody.innerHTML = ''; return; }
       const files = await res.json();
       filesTableBody.innerHTML = '';
@@ -428,10 +429,9 @@
     const id = btn.dataset.id;
     if(!confirm('¿Eliminar archivo id '+id+'?')) return;
     try{
-      const res = await fetch('/admin/delete-file', { method:'POST', headers: {'Content-Type':'application/json', 'Authorization': token ? 'Bearer '+token : '' }, body: JSON.stringify({ fileId: parseInt(id,10) }) });
-      const data = await res.json();
-      if(!res.ok) { cfgOutput.textContent = 'Error borrando archivo: '+(data.error||res.status); return; }
-      cfgOutput.textContent = 'Archivo eliminado';
+      const res = await fetch(apiBase()+'/api/files/'+parseInt(id,10), { method:'DELETE', headers: { 'Authorization': token ? 'Bearer '+token : '' } });
+      const ok = res.ok;
+      cfgOutput.textContent = ok ? 'Archivo eliminado' : 'Error borrando archivo: '+res.status;
       loadFiles();
     }catch(e){ cfgOutput.textContent = 'Error borrando archivo: '+e.message; }
   });
